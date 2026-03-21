@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة حروف مع طلال</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+    <!-- مكتبة لعمل حركات الاحتفال -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg-gradient: linear-gradient(135deg, #0f172a, #1e1b4b, #312e81);
+            --text-main: #ffffff;
+            --text-muted: #cbd5e1;
+            
+            /* ألوان الفرق */
+            --blue-glow: #3b82f6;
+            --blue-bg: linear-gradient(135deg, #2563eb, #1e3a8a);
+            --red-glow: #ef4444;
+            --red-bg: linear-gradient(135deg, #dc2626, #7f1d1d);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center; padding: 2rem; overflow-x: hidden;
+        }
+
+        /* زر الإعدادات */
+        .settings-btn {
+            position: absolute; top: 1.5rem; left: 1.5rem;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: white; font-size: 1.5rem; padding: 0.5rem 1rem; border-radius: 12px;
+            cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s; z-index: 50;
+        }
+        .settings-btn:hover { background: rgba(255,255,255,0.2); transform: rotate(15deg); }
+
+        .settings-input {
+            width: 100%; padding: 1rem; border-radius: 12px; background: rgba(0,0,0,0.5);
+            border: 1px solid #64748b; color: white; font-size: 1.2rem; margin-bottom: 1.5rem;
+            outline: none; font-family: inherit;
+        }
+        .settings-input:focus { border-color: #fbbf24; }
+
+        .header { text-align: center; margin-bottom: 2rem; animation: fadeIn 0.8s ease-out; }
+        .header h1 {
+            font-size: 3rem; font-weight: 800;
+            background: linear-gradient(to right, #fbbf24, #f59e0b);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem; text-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .instructions { color: #94a3b8; font-size: 1.1rem; margin-bottom: 1.5rem; }
+        .instructions span.red { color: #ef4444; font-weight: bold; }
+        .instructions span.blue { color: #3b82f6; font-weight: bold; }
+
+        /* لوحة النقاط المُحدّثة */
+        .scoreboard-wrapper { width: 100%; max-width: 800px; padding: 0 1rem; display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem; animation: fadeIn 1s ease-out;}
+        .rounds-target { color: #fbbf24; font-size: 1.4rem; font-weight: bold; margin-bottom: 1.5rem; background: rgba(251, 191, 36, 0.1); padding: 0.5rem 1.5rem; border-radius: 20px; border: 1px dashed rgba(251, 191, 36, 0.4); text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .scoreboard { display: flex; gap: 2rem; width: 100%; justify-content: center; }
+        
+        .team-score {
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);
+            padding: 1rem; border-radius: 16px; font-weight: 800;
+            display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: 45%; 
+            border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .team-title { font-size: 1.3rem; margin-bottom: 0.5rem; }
+        .team-score.blue { border-bottom: 4px solid var(--blue-glow); }
+        .team-score.red { border-bottom: 4px solid var(--red-glow); }
+        .score-row { display: flex; justify-content: center; gap: 1.5rem; width: 100%; }
+        .score-item { text-align: center; }
+        .score-label { color: #cbd5e1; font-size: 1rem; margin-bottom: 0.3rem; }
+        .score-val { background: rgba(0,0,0,0.3); padding: 0.2rem 1rem; border-radius: 12px; font-size: 1.6rem; color: #fff; }
+
+        /* لوحة العسل المتداخلة */
+        .board-container {
+            display: flex; flex-direction: column; align-items: center; padding: 2rem;
+            background: rgba(0,0,0,0.2); border-radius: 30px; box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+            animation: scaleIn 0.8s ease-out; position: relative;
+        }
+
+        .hex-row { display: flex; justify-content: center; margin-top: -24px; z-index: 1; }
+        .hex-row:first-child { margin-top: 0; }
+        .hex-wrap {
+            position: relative; width: 90px; height: 104px;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            background: rgba(255, 255, 255, 0.2); margin: 0 4px; padding: 3px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+        }
+        .hex-inner {
+            width: 100%; height: 100%;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            background: rgba(15, 23, 42, 0.95); display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; font-weight: 800; color: #fbbf24; transition: all 0.15s ease;
+        }
+        .hex-wrap:hover { transform: scale(1.15); z-index: 10; background: #fbbf24; box-shadow: 0 0 20px #fbbf24; }
+        .hex-wrap:hover .hex-inner { background: #451a03; color: #fde68a; }
+
+        .hex-wrap.team-blue { background: var(--blue-glow); transform: scale(1.05); z-index: 5; }
+        .hex-wrap.team-blue .hex-inner { background: var(--blue-bg); color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .hex-wrap.team-red { background: var(--red-glow); transform: scale(1.05); z-index: 5; }
+        .hex-wrap.team-red .hex-inner { background: var(--red-bg); color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+
+        /* المودال الشفاف */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 100;
+            opacity: 0; pointer-events: none; transition: opacity 0.15s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-content {
+            background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255,255,255,0.1); padding: 3rem;
+            border-radius: 24px; text-align: center; transform: translateY(20px) scale(0.95);
+            transition: all 0.15s ease-out; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            max-width: 550px; width: 90%;
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-letter { font-size: 5rem; color: #fbbf24; margin-bottom: 0.5rem; text-shadow: 0 0 30px rgba(251, 191, 36, 0.4); }
+        .modal-question { font-size: 1.6rem; margin-bottom: 1.5rem; color: #ffffff; line-height: 1.6; }
+        .modal-title { font-size: 1.2rem; margin-bottom: 1.5rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; }
+        .modal-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+        /* أزرار المودال */
+        .btn {
+            border: none; padding: 1rem 2rem; font-size: 1.2rem; font-weight: 700; border-radius: 12px;
+            cursor: pointer; transition: all 0.2s; color: white; min-width: 140px;
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        .btn-blue { background: var(--blue-glow); }
+        .btn-red { background: var(--red-glow); }
+        .btn-clear { background: #64748b; }
+        .btn-cancel { background: transparent; border: 2px solid #64748b; color: #cbd5e1; }
+        .btn-answer { background: transparent; border: 2px dashed #fbbf24; color: #fbbf24; font-size: 1.1rem; padding: 0.8rem 1.5rem; }
+        .btn-answer:hover { background: rgba(251, 191, 36, 0.1); }
+
+        .controls { margin-top: 3rem; display: flex; gap: 1.5rem; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        /* مودال الاحتفال بالانتصار */
+        #winModalOverlay { z-index: 200; }
+        #winModalOverlay .modal-content {
+            border: 3px solid #fbbf24; background: rgba(15, 23, 42, 0.95);
+            box-shadow: 0 0 50px rgba(251, 191, 36, 0.5); padding: 4rem;
+        }
+        .win-title { font-size: 3rem; color: #fbbf24; margin-bottom: 1rem; }
+
+        /* القائمة الرئيسية (Start Menu) الاحترافية */
+        #startMenuOverlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+            z-index: 600; display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        /* تأثيرات الإضاءة الخلفية */
+        .ambient-glow {
+            position: absolute; width: 600px; height: 600px; filter: blur(40px);
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+            border-radius: 50%; opacity: 0.8; animation: moveGlow 10s ease-in-out infinite alternate;
+            z-index: 0; pointer-events: none;
+        }
+        @keyframes moveGlow { 0% { transform: scale(1) translate(0,0); } 100% { transform: scale(1.5) translate(100px,-50px); } }
+
+        .start-glass-panel {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 30px; padding: 4rem 3rem; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(255,255,255,0.02);
+            animation: panelEnter 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 550px; z-index: 10;
+        }
+        @keyframes panelEnter {
+            0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .start-icon { font-size: 5rem; margin-bottom: 0px; filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.5)); animation: pulseGlow 3s infinite;}
+        
+        .start-title {
+            font-size: 4.5rem; font-weight: 800; margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #ed8936);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0px 10px 15px rgba(245, 158, 11, 0.3)); letter-spacing: 1px;
+        }
+        
+        .start-subtitle {
+            color: #94a3b8; font-size: 1.4rem; font-weight: 400; letter-spacing: 2px;
+            margin-bottom: 3rem; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;
+        }
+        
+        .start-buttons-wrapper { display: flex; flex-direction: column; gap: 1.2rem; width: 100%; }
+        
+        .btn-premium {
+            width: 100%; padding: 1.2rem; font-size: 1.6rem; font-weight: 700;
+            border-radius: 16px; font-family: 'Tajawal', sans-serif; cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); outline: none; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        
+        .btn-play {
+            background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #1e1b4b; border: none;
+            box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4);
+        }
+        
+        .btn-play:hover {
+            transform: translateY(-4px); box-shadow: 0 15px 30px -5px rgba(245, 158, 11, 0.6);
+            filter: brightness(1.1);
+        }
+        
+        .btn-how {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1; backdrop-filter: blur(10px);
+        }
+        
+        .btn-how:hover {
+            background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3); color: #fff;
+            transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        #instructionsOverlay { z-index: 700; }
+        .instructions-list { text-align: right; color: #e2e8f0; font-size: 1.3rem; line-height: 1.8; margin-bottom: 2rem; list-style-position: inside; }
+
+        /* شاشة اختيار الدور */
+        #roleOverlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-gradient); z-index: 500;
+            display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+        .role-btn {
+            font-size: 1.5rem; padding: 1.5rem 3rem; margin: 1rem;
+            border-radius: 20px; border: 2px solid #fbbf24; background: rgba(0,0,0,0.5);
+            color: white; cursor: pointer; transition: all 0.3s; font-family: 'Tajawal', sans-serif;
+        }
+        .role-btn:hover { background: #fbbf24; color: #1e1b4b; transform: scale(1.05); }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 10px #fbbf24; transform: scale(1.05); }
+            50% { box-shadow: 0 0 35px #fbbf24; transform: scale(1.15); }
+            100% { box-shadow: 0 0 10px #fbbf24; transform: scale(1.05); }
+        }
+        .hex-wrap.active-question {
+            animation: pulseGlow 1.5s infinite; z-index: 10; background: #fbbf24;
+        }
+        .hex-wrap.active-question .hex-inner {
+            background: #451a03; color: #fde68a;
+        }
+
+        /* خلفية الفقاعات السداسية المتحركة */
+        .bg-bubbles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; overflow: hidden; pointer-events: none; margin: 0; padding: 0;
+        }
+        .bg-bubbles li {
+            position: absolute; display: block; list-style: none;
+            background: rgba(255, 255, 255, 0.05);
+            animation: floatUp 20s linear infinite; bottom: -150px;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+        .bg-bubbles li:nth-child(1) { left: 10%; width: 80px; height: 92px; animation-duration: 25s; animation-delay: 2s; }
+        .bg-bubbles li:nth-child(2) { left: 25%; width: 60px; height: 69px; animation-duration: 20s; animation-delay: 5s; }
+        .bg-bubbles li:nth-child(3) { left: 50%; width: 100px; height: 115px; animation-duration: 30s; animation-delay: 0s; background: rgba(255, 255, 255, 0.03); }
+        .bg-bubbles li:nth-child(4) { left: 70%; width: 40px; height: 46px; animation-duration: 15s; animation-delay: 3s; }
+        .bg-bubbles li:nth-child(5) { left: 85%; width: 70px; height: 80px; animation-duration: 22s; animation-delay: 7s; }
+        .bg-bubbles li:nth-child(6) { left: 40%; width: 50px; height: 57px; animation-duration: 18s; animation-delay: 10s; }
+        .bg-bubbles li:nth-child(7) { left: 90%; width: 90px; height: 103px; animation-duration: 28s; animation-delay: 15s; background: rgba(255, 255, 255, 0.02); }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-1200px) rotate(720deg); opacity: 0; }
+        }
+
+        /* وميض الشاشة */
+        .flash-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; opacity: 0; z-index: 150;
+            transition: opacity 0.15s ease-out;
+        }
+        .flash-blue { background-color: rgba(59, 130, 246, 0.3); opacity: 1; }
+        .flash-red { background-color: rgba(239, 68, 68, 0.3); opacity: 1; }
+
+        @media (max-width: 768px) {
+            .hex-wrap { width: 60px; height: 69px; }
+            .hex-row { margin-top: -16px; }
+            .hex-inner { font-size: 1.8rem; }
+            .scoreboard { flex-direction: column; gap: 1rem; }
+            .team-score { width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+    <ul class="bg-bubbles">
+        <li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+    </ul>
+    <div id="flashOverlay" class="flash-overlay"></div>
+
+    <!-- القائمة الرئيسية -->
+    <div id="startMenuOverlay">
+        <div class="ambient-glow"></div>
+        <div class="start-glass-panel">
+            <svg class="start-icon" viewBox="0 0 120 120" style="width: 220px; height: 220px; margin-bottom: 2rem; filter: drop-shadow(0 0 35px rgba(212, 175, 55, 0.4)); animation: floatSlow 3s ease-in-out infinite alternate;">
+              <style>
+                .spin-ring { transform-origin: 60px 60px; animation: spinRing 25s linear infinite; }
+                @keyframes spinRing { 100% { transform: rotate(360deg); } }
+                @keyframes floatSlow { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
+              </style>
+              <defs>
+                <linearGradient id="arabicGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#F9F29F" />
+                  <stop offset="50%" stop-color="#D4AF37" />
+                  <stop offset="100%" stop-color="#AA7C11" />
+                </linearGradient>
+                <radialGradient id="royalCore" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#1e3a8a" />
+                  <stop offset="100%" stop-color="#0f172a" />
+                </radialGradient>
+                <filter id="glowGold">
+                  <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <!-- Outer Decorative Rings -->
+              <circle class="spin-ring" cx="60" cy="60" r="54" fill="none" stroke="url(#arabicGold)" stroke-width="2" stroke-dasharray="3, 5" opacity="0.8"/>
+              <circle cx="60" cy="60" r="48" fill="none" stroke="url(#arabicGold)" stroke-width="0.5" opacity="0.4"/>
+
+              <!-- 8-Pointed Islamic Star (Rub el Hizb) -->
+              <g filter="url(#glowGold)">
+                  <!-- First Square -->
+                  <rect x="30" y="30" width="60" height="60" fill="url(#royalCore)" stroke="url(#arabicGold)" stroke-width="2.5" rx="2" />
+                  <!-- Second Square rotated 45deg -->
+                  <rect x="30" y="30" width="60" height="60" fill="url(#royalCore)" stroke="url(#arabicGold)" stroke-width="2.5" rx="2" transform="rotate(45 60 60)" />
+              </g>
+
+              <!-- Inner Decor for the letter -->
+              <circle cx="60" cy="60" r="24" fill="none" stroke="url(#arabicGold)" stroke-width="1.5" opacity="0.9" />
+              <circle cx="60" cy="60" r="18" fill="url(#arabicGold)" opacity="0.2"/>
+
+              <!-- Central Letter 'ط' -->
+              <text x="60" y="73" font-family="'Tajawal', sans-serif" font-weight="900" font-size="42" fill="url(#arabicGold)" text-anchor="middle" filter="url(#glowGold)">ط</text>
+            </svg>
+            <h1 class="start-title">حروف مع طلال</h1>
+            <p class="start-subtitle">تحدي الذكاء، الحروف، والثقافة</p>
+            
+            <div class="start-buttons-wrapper">
+                <button class="btn-premium btn-play" onclick="showRoleSelection()">بدء المواجهة ▶️</button>
+                <button class="btn-premium btn-how" onclick="showInstructions()">كيف تلعب؟ 📖</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة شرح اللعب (تعليمات) -->
+    <div class="modal-overlay" id="instructionsOverlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2 class="modal-letter" style="font-size: 3rem; margin-bottom: 2rem;">📖 طريقة اللعب</h2>
+            <ul class="instructions-list">
+                <li>🔵 <span style="font-weight: bold; color: #60a5fa;">الفريق الأزرق:</span> هدفه التوصيل عمودياً.</li>
+                <li>🔴 <span style="font-weight: bold; color: #f87171;">الفريق الأحمر:</span> هدفه التوصيل أفقياً.</li>
+                <li>🃏 <span style="font-weight: bold; color: #fbbf24;">المساعدات:</span> لكل فريق حق تغيير سؤال واحد.</li>
+                <li>🏆 <span style="font-weight: bold; color: #10b981;">الفوز:</span> يحصل الفريق الذي يبني مساراً متصلاً على الجولة.</li>
+            </ul>
+            <button class="btn btn-blue" onclick="closeInstructions()" style="width: 100%; padding: 1rem; font-size: 1.5rem;">جاهز للعب! 👍</button>
+        </div>
+    </div>
+
+    <div id="roleOverlay">
+        <h1 style="font-size: 3.5rem; color: #fbbf24; margin-bottom: 1rem; text-shadow: 0 4px 15px rgba(245, 158, 11, 0.5);">لعبة حروف مع طلال 🐝</h1>
+        <h2 style="margin-bottom: 2.5rem; color: #cbd5e1; font-size: 1.8rem;">اختر وضع الشاشة لتفعيل الرابط بينهما:</h2>
+        <button class="role-btn" onclick="selectRole('host')">👨‍🏫 شاشة المُقدم (التحكم والأسئلة)</button>
+        <button class="role-btn" onclick="selectRole('board')">📺 شاشة المتسابقين (العرض التفاعلي)</button>
+    </div>
+
+    <button id="mainSettingsBtn" class="settings-btn" onclick="openSettings()" title="الإعدادات">⚙️ الإعدادات</button>
+
+    <div class="header">
+        <h1 id="mainTitle">حروف مع طلال 🐝</h1>
+        <p class="instructions">
+            الفريق <span class="blue">الأزرق</span> يبدأ من الأعلى ويهدف للأسفل. <br>
+            الفريق <span class="red">الأحمر</span> يبدأ من اليمين ويهدف لليسار.
+        </p>
+    </div>
+
+    <!-- لوحة النقاط -->
+    <div class="scoreboard-wrapper">
+        <div id="roundsGoalDisplay" class="rounds-target">الهدف: الفوز في 3 جولات 🏆</div>
+        
+        <div class="scoreboard">
+            <div class="team-score blue">
+                <div class="team-title" id="titleBlue">🔵 الفريق الأزرق</div>
+                <div class="score-row">
+                    <div class="score-item">
+                        <div class="score-label">الجولات</div>
+                        <div class="score-val" id="roundsBlue" style="color: #60a5fa;">0</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">الخلايا</div>
+                        <div class="score-val" id="scoreBlue">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="team-score red">
+                <div class="team-title" id="titleRed">🔴 الفريق الأحمر</div>
+                <div class="score-row">
+                    <div class="score-item">
+                        <div class="score-label">الجولات</div>
+                        <div class="score-val" id="roundsRed" style="color: #f87171;">0</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">الخلايا</div>
+                        <div class="score-val" id="scoreRed">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- شبكة الخلايا -->
+    <div class="board-container" id="board">
+        <!-- يتم رسم الخلايا بواسطة JavaScript -->
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-clear" onclick="hardResetGame()">🔄 مباراة جديدة بالكامل</button>
+    </div>
+
+    <!-- المودال الخاص باحتلال الخلية -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <h2 class="modal-letter" id="modalLetter">أ</h2>
+            <p class="modal-question" id="modalQuestion"></p>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <button class="btn btn-answer" id="showAnswerBtn" onclick="showAnswer()">👁️ إظهار الإجابة</button>
+                <div id="jokerControls" style="display: inline-block; margin-right: 1rem;">
+                    <button class="btn btn-answer" id="changeQuestionBtnRed" onclick="changeQuestion('red')" style="border-color: #ef4444; color: #ef4444; margin-left: 0.5rem; display:none;">🃏 تغيير (أحمر)</button>
+                    <button class="btn btn-answer" id="changeQuestionBtnBlue" onclick="changeQuestion('blue')" style="border-color: #3b82f6; color: #3b82f6; display:none;">🃏 تغيير (أزرق)</button>
+                </div>
+            </div>
+            
+            <div id="soundControls" style="margin-bottom: 1.5rem; display: none;">
+                <button class="btn btn-answer" onclick="playHostSound('correct')" style="border-color: #10b981; color: #10b981; margin-left: 1rem; border-style: solid;">✅ إجابة صحيحة</button>
+                <button class="btn btn-answer" onclick="playHostSound('wrong')" style="border-color: #ef4444; color: #ef4444; border-style: solid;">❌ إجابة خاطئة</button>
+            </div>
+            
+            <p id="modalAnswer" style="font-size: 1.4rem; margin-bottom: 2rem; color: #10b981; font-weight: bold; display: none;"></p>
+            
+            <p class="modal-title">لمن الإجابة الصحيحة؟</p>
+            <div class="modal-buttons" id="assignButtons">
+                <button class="btn btn-blue" onclick="assignCell('blue')">أزرق 🔵</button>
+                <button class="btn btn-red" onclick="assignCell('red')">أحمر 🔴</button>
+                <button class="btn btn-clear" onclick="assignCell('clear')">إفراغ ⚪</button>
+                <button class="btn btn-cancel" onclick="closeModal()">إلغاء ❌</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال الإعدادات -->
+    <div class="modal-overlay" id="settingsModalOverlay" style="z-index: 300;">
+        <div class="modal-content" style="max-width: 500px;">
+            <h2 class="modal-letter" style="font-size: 3rem; margin-bottom: 2rem;">⚙️ الإعدادات</h2>
+            
+            <div style="text-align: right;">
+                <label style="color: #cbd5e1; font-size: 1.2rem; display: block; margin-bottom: 0.5rem;">اسم اللعبة (العنوان):</label>
+                <input type="text" id="gameNameInput" class="settings-input" placeholder="مثال: تحدي الأبطال" />
+                
+                <label style="color: #cbd5e1; font-size: 1.2rem; display: block; margin-bottom: 0.5rem;">اسم الفريق الأزرق:</label>
+                <input type="text" id="blueTeamInput" class="settings-input" placeholder="الفريق الأزرق" style="margin-bottom: 1rem;" />
+
+                <label style="color: #cbd5e1; font-size: 1.2rem; display: block; margin-bottom: 0.5rem;">اسم الفريق الأحمر:</label>
+                <input type="text" id="redTeamInput" class="settings-input" placeholder="الفريق الأحمر" style="margin-bottom: 1rem;" />
+
+                <label style="color: #cbd5e1; font-size: 1.2rem; display: block; margin-bottom: 0.5rem;">عدد الجولات للفوز بالمباراة الكبرى:</label>
+                <input type="number" id="roundsGoalInput" class="settings-input" min="1" max="10" />
+            </div>
+
+            <div class="modal-buttons" style="margin-top: 1rem;">
+                <button class="btn btn-blue" onclick="saveSettings()">💾 حفظ وبدء من جديد</button>
+                <button class="btn btn-cancel" onclick="closeSettings()">إلغاء ❌</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال الاحتفال بالانتصار -->
+    <div class="modal-overlay" id="winModalOverlay">
+        <div class="modal-content">
+            <h2 class="win-title" id="winTitle">🏆 فائز الجولة 🏆</h2>
+            <h1 id="winMessage" style="font-size: 3.5rem; margin: 2rem 0; font-weight: 800; text-shadow: 0 0 20px rgba(255,255,255,0.5);">الفريق...</h1>
+            <p id="winSubMessage" style="color: #cbd5e1; font-size: 1.3rem; margin-bottom: 2rem; line-height: 1.5;">نجح باختراق اللوحة وصناعة مسار كامل!</p>
+            <div class="modal-buttons">
+                <button class="btn" id="nextRoundBtn" onclick="initRound()" style="background: #10b981; font-size: 1.3rem; padding: 1rem 2rem;">الجولة التالية ➡️</button>
+                <button class="btn" id="resetMatchBtn" onclick="hardResetGame()" style="background: #ef4444; font-size: 1.3rem; padding: 1rem 2rem; display: none;">مباراة جديدة 🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- حقوق الملكية الخاصة بطلال -->
+    <div style="position: fixed; bottom: 12px; left: 0; right: 0; text-align: center; color: rgba(203, 213, 225, 0.4); font-size: 1.2rem; z-index: 100; pointer-events: none; font-family: 'Tajawal', sans-serif;">
+        فكرة وتطوير: <span style="color: #fbbf24; font-weight: 800; letter-spacing: 1px; text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);">طلال</span> © 2026
+    </div>
+
+    <script>
+        // إعداد الصوت للاستخدام المباشر
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playTick() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function playAssign() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function playWinTune() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.2);
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.4);
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.6);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2.0);
+            osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 2.0);
+        }
+
+        function playHostSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (type === 'correct') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(900, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+                osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.5);
+            }
+            syncToStorage('sound_' + type);
+        }
+
+        const questionsDB = {
+            'أ': [
+                {q:"أسطورة أرجنتينية في كرة القدم قاد منتخب بلاده للفوز بكأس العالم 1986 واشتهر بهدف تاريخي بيده؟", a:"أرماندو مارادونا (دييغو)"},
+                {q:"أنجح فيلم سينمائي في التاريخ من حيث الإيرادات للمخرج جيمس كاميرون (كائنات زرقاء وحرب على الطبيعة)؟", a:"أفاتار"},
+                {q:"نادي إنجليزي لونه أحمر يُلقب بـ (المدفعجية) ويلعب في ستاديوم الإمارات اللندني؟", a:"أرسنال"},
+                {q:"قارة تعتبر الأكبر في العالم وتضم بلدان عملاقة كالصين والهند وروسيا؟", a:"آسيا"},
+                {q:"ممثلة أمريكية شهيرة بطلة أفلام (لارا كروفت) والسفيرة الإنسانية للنوايا الحسنة؟", a:"أنجلينا جولي"},
+                {q:"أشهر أنمي يتحدث عن القراصنة والبحار وبطله دي لوفي الذي أكل فاكهة المطاط لكي يصبح ملك القراصنة؟", a:"أنمي ون بيس (One Piece)"},
+                {q:"سلسلة ألعاب فيديو دموية وملحمية حصرية للبلايستيشن بطلها كريتوس إسبارطي الذي يقاتل الآلهة؟", a:"إله الحرب (God of War)"}
+            ],
+            'ب': [
+                {q:"نادي إسباني عريق يقع في إقليم كتالونيا ويشتهر بأكاديمية لاماسيا لتخريج سحرة الكرة؟", a:"برشلونة"},
+                {q:"بطل خارق من عالم دي سي (DC) يرتدي زي خفاش ويحمي مدينة غوثام الغارقة في الجريمة؟", a:"باتمان"},
+                {q:"مسلسل أمريكي يعتبر الأعظم تاريخياً، يتحدث عن مدرس كيمياء يتحول لأكبر تاجر ممنوعات في المدينة؟", a:"بريكينج باد (Breaking Bad)"},
+                {q:"دولة من أمريكا الجنوبية فازت بكأس العالم 5 مرات وصدرت أساطير مثل بيليه ورونالدو ورونالدينيو؟", a:"البرازيل"},
+                {q:"نادي ألماني بطل مهيمن كلياً يُلقب بـ (العملاق البافاري) وملعبه أليانز أرينا ذو اللون الأحمر؟", a:"بايرن ميونخ"}
+            ],
+            'ت': [
+                {q:"فيلم رومانسي ودرامي شهير جداً مبني على قصة حقيقية، غرق فيه بطل الفيلم (جاك) مع أضخم سفينة؟", a:"تايتانيك"},
+                {q:"نادي إنجليزي لندني يُعرف بـ (السبيرز) أو الديوك، ولعب فيه النجم الويلزي غاريث بيل وهاري كين؟", a:"توتنهام هوتسبير"},
+                {q:"ممثل هوليودي وسيم يشتهر بأداء جميع حركاته الخطيرة بنفسه في سلسلة أفلام (مهمة مستحيلة)؟", a:"توم كروز"},
+                {q:"نادي إنجليزي لندني عريق ذو لون أزرق يُلقب بـ (البلوز / أسود لندن) ومقره ستامفورد بريدج؟", a:"تشيلسي"},
+                {q:"دولة عربية إفريقية رائدة عاصمتها تحمل نفس الاسم، وتشتهر بنادي الترجي ونسور قرطاج؟", a:"تونس"}
+            ],
+            'ث': [
+                {q:"إله الرعد والبرق في سلسلة أفلام مارفل السينمائية وصاحب ومروض مطرقة الميولنير الثقيلة؟", a:"ثور (Thor)"},
+                {q:"حيوان مفترس وماكر جداً يظهر هكذا دائماً في حكايات وقصص الأطفال المروية بالذكاء والغدر؟", a:"ثعلب"},
+                {q:"حالة الماء عندما ينخفض لدرجة التجمد الإقليمية التامة فينزل من السماء شتاءً بغزارة ليغطي الأرض ناصعاً؟", a:"ثلج"},
+                {q:"ماذا يسمى الوحش الشرير البنفسجي الذي أباد نصف كائنات مجرات الكون بلمسة إصبع واحدة في سلسلة أفينجرز مارفل؟", a:"ثانوس"}
+            ],
+            'ج': [
+                {q:"فيلم وسلسلة أكشن دموية شهيرة تتحدث عن قاتل محترف معتزل يعود للانتقام الشرس بسبب كلبه الأليف؟", a:"جون ويك"},
+                {q:"شخصية شريرة فوضوية مجنونة ومبتسمة دائماً وهو العدو اللدود الذي لا يُقهر بسهولة للبطل الخفاش باتمان؟", a:"جوكر"},
+                {q:"لاعب خط وسط إنجليزي شاب مميز وهداف يلعب حالياً في ريال مدريد الإسباني ويرتدي القميص رقم 5 التاريخي؟", a:"جود بيلينغهام"},
+                {q:"الاسم الفني لممثل أمريكي شهير عبقري تميز بإتقانه الخرافي لدور زعيم القراصنة (جاك سبارو) السكران؟", a:"جوني ديب"},
+                {q:"دولة عربية أفريقية مشهورة كروياً بالروح القتالية، تُلقب ببلد المليون ونصف المليون شهيد البواسل؟", a:"الجزائر"},
+                {q:"سلسلة ألعاب فيديو أسطورية (حرامي السيارات) في عالم مفتوح وحرية مطلقة أحدث أجزائها رقم 6؟", a:"جراند أو جي تي أي (GTA / Grand Theft Auto)"}
+            ],
+            'ح': [
+                {q:"المركز الميداني الوحيد في رياضة كرة القدم التنافسية المسموح له بمسك الكرة بشكل صريح باليد وحمايتها؟", a:"حارس مرمى"},
+                {q:"أسطورة كروية ومدرب مصري حالي، وهو الهداف التاريخي المطلق لمنتخب الفراعنة والملقب محلياً بلقب (العميد)؟", a:"حسام حسن"},
+                {q:"حيوان قوي سريع ومخلص للإنسان استخدم قديماً للحروب وفي العصر الحديث في سباقات الفروسية وقفز الحواجز الأصيلة؟", a:"حصان (الخيل)"},
+                {q:"مدينة سورية عريقة ذات قلعة تاريخية صامدة وكبيرة جداً في الوسط وتعتبر من أقدم وأعرق المدن المأهولة بالعالم المستمر؟", a:"حلب"}
+            ],
+            'خ': [
+                {q:"أسطورة أرجنتينية دفاعية مخلصة جداً لنادي إنتر ميلان الإيطالي قضى فيها عمره الكروي ويُلقب بـ (إل كابيتانو) المعظم؟", a:"خافيير زانيتي"},
+                {q:"سلسلة أفلام خيالية ملحمية أسطورية (سيد الملوك) أو (سيد الـ...) تتحدث عن قزم يحمل شيئاً سحرياً مذهباً لتدميره في بركان الجبل الملعون؟", a:"خواتم (سيد الخواتم - The Lord of the Rings)"},
+                {q:"حيوان ثديي يطير ليلاً وينام نهاراً مقلوباً بحرية ويعتمد على الموجات الصوتية للتنقل بسلام وصيد الحشرات، ألهم زي البطل باتمان؟", a:"خفاش"},
+                {q:"ممر ومسطح مائي استراتيجي شهير ومهم يفصل جغرافياً بين شبه الجزيرة العربية اقتصادياً وتجارياً عن دولة إيران المجاورة شرقاً؟", a:"الخليج العربي"}
+            ],
+            'د': [
+                {q:"الشخصية السينمائية الكوميدية المكسورة الجدار الرابع (البطل الثرثار بالزي الأحمر) والذي دمج مع ولفيرين للقتال لإنقاذ الكون؟", a:"ديدبول (Deadpool)"},
+                {q:"المسلسل الرمضاني والكوميدي السعودي الأيقوني والتاريخي الذي تم إنشاؤه من بطولة العمالقة ناصر القصبي وعبدالله السدحان الكوميدية؟", a:"طاش ما طاش (إجابة تبدأ بطاء) // بديل لدال: ممثل أمريكي عظيم وبطل تايتانيك والذي انتظر الأوسكار طويلاً حتى ناله عن فيلم העائد أخيراً؟ .. دي كابريو (ليوناردو دي كابريو)"},
+                {q:"نادي كرة قدم ألماني يشتهر بملعبه الملون بالأسود والأصفر الجميل (سيغنال إيدونا بارك) و جمهوره المتحمس الجدار الأصفر؟", a:"دورتموند (بوروسيا دورتموند)"},
+                {q:"صانع ألعاب بلجيكي عبقري ومهندس خط وسط مانشستر سيتي الأول ذو الشعر الأشقر والتمريرات الحاسمة التي لا تقرأ؟", a:"دي بروين (كيفين دي بروين)"},
+                {q:"كائنات عملاقة ومنقرضة شرسة سادت الأرض قبل ملايين السنين بقوة وجبروت وجسدت موضوعاً رائعاً لفيلم الحديقة الجوراسية المخيف؟", a:"ديناصورات (ديناصور)"},
+                {q:"سلسلة أنمي شهيرة تتحدث عن كرات سبع قادرة على استدعاء تنين وتحقيق الأمنيات للمقاتل غوكو وأصدقائه؟", a:"دراغون بول (Dragon Ball)"},
+                {q:"أنمي يتحدث عن مذكرة موت تسقط من الشينيغامي ريوك ليأخذها ياغامي لايت ويحاول تطهير العالم من المجرمين؟", a:"ديث نوت (Death Note)"}
+            ],
+            'ذ': [
+                {q:"حيوان مفترس يشبه الكلب البوليسي ويعوي في الليالي المقمرة الباردة ضمن قطعان منظمة تسلسلية واجتماعية بقيادة الألفا القوي؟", a:"ذئب"},
+                {q:"معدن نفيس أصفر براق اللون لا يصدأ أبداً ومرتبط تاريخياً قديماً وحديثاً بتخزين الثروة الكبيرة وصناعة حلي النساء المذهلة؟", a:"ذهب"},
+                {q:"حشرة طائرة طفيلية ومزعجة تنقل بعض الأمراض وتتواجد في كل مكان وسبحان من ضرب بها مثلاً في القرآن العزيز بعجز الإنسان لابتكارها؟", a:"ذبابة"}
+            ],
+            'ر': [
+                {q:"نادي إسباني عملاق وكبير أوروبا يُلقب بالميرنجي وتألق بتحقيق أكبر رقم من ألقاب دوري أبطال أوروبا على مر التاريخ الرياضي؟", a:"ريال مدريد"},
+                {q:"أسطورة برتغالية خرافية في كرة القدم يُلقب بـ الدون أو CR7 ولاعب النصر السعودي وأكثر من سجل أهدافاً رسمية وعالمية معترف بها فالتاريخ؟", a:"رونالدو (كريستيانو رونالدو)"},
+                {q:"مدينة وعاصمة إيطالية قديمة ونادي إيطالي شهير لكرة القدم ارتدى قميصه توتي ذو اللون العنابي الإمبراطوري الجميل واسمها يشير لإمبراطورية أوربية شاسعة بالقدم؟", a:"روما (Rome)"},
+                {q:"البطل الهوليوودي الممثل الذي لعب دور الملياردير العبقري المتغطرس الذي يبني بدلته الحديدية (آيرون مان / توني ستارك) في سلسلة مارفل الجبارة؟", a:"روبرت داوني جونيور"}
+            ],
+            'ز': [
+                {q:"أسطورة فنية فرنسية في وسط ملعب كرة القدم من أصول وحقبة جزائرية ذو صلع مميز وحقق كأس العالم القطرية 98 ومدرب ريال مدريد التاريخي لاحقاً بالثلاثية؟", a:"زيدان (زين الدين زيدان)"},
+                {q:"كائنات مرعبة ومفترسة من موتى أحياء تتغذى حصراً على البشر الباقين وتنتشر بقوة في أفلام ومسلسلات الرعب الأيقونية (حرف الزاي)؟", a:"زومبي (الزومبي)"},
+                {q:"حيوان إفريقي يمتلك أطول عنق مسجل فالعالم بين كائنات سطح اليابسة ليأكل بسهولة من الشجر المرتفع دون منافسين أرضيين في السهول العشبية؟", a:"زرافة"},
+                {q:"كوكب مميز وظاهر في مجموعتنا الشمسية الرائعة يحيط به حلقات غازية وجليدية ضخمة جميلة تسبح وتدور في مداره الكوني بانتظام كالسوار حول المعصم؟", a:"زحل (Saturn)"}
+            ],
+            'س': [
+                {q:"بطل خارق خيالي قوي جداً شهير بزيه الأزرق والأحمر هبط من كوكب كريبتون الغريب ليربى ويعمل صحفياً باسم (كلارك كنت) بحياته البشرية السوية؟", a:"سوبرمان (Superman)"},
+                {q:"بطل مارفل شاب طائش ومراهق تعرض في رحلته للدغة عنكبوت معدل وراثياً جعله يتحول لبطل خارق يتسلق الجدران بناطحات السحاب بنيويورك لحماية الأبرياء؟", a:"سبايدرمان (الرجل العنكبوت)"},
+                {q:"نادي إنجليزي سماوي اللون يُدربه الإسباني بيب غوارديولا وحقق ثلاثية تاريخية للبطولات مؤخراً بمشاركة هالاند بعدما سيطر كلياً على ألقاب الدوري المحلي المعقد؟", a:"سيتي (مانشستر سيتي)"},
+                {q:"لاعب محلي سعودي ماهر وهداف ومراوغ كبير بكرة القدم يعتبر نجم نادي الهلال ومنتخب بلاده، سجل هدف التورنيدو التاريخي على ميسي ومنتخبه بكأس العالم (اسمه الأول يبدأ بحرف السين)؟", a:"سالم الدوسري"}
+            ],
+            'ش': [
+                {q:"شخصية محقق بريطاني عبقري خيالي ابتكره الكاتب العظيم آرثر كونان دويل ليفك أعقد الألغاز البوليسية يعزف دوماً على الكمان ولديه مساعد صديق يدعى واتسون يعاونه؟", a:"شيرلوك هولمز"},
+                {q:"شبكة رياضية تلفزيونية قطرية وعالمية ضخمة شهيرة جداً تمتلك حصرياً حقوق البث لكبرى البطولات العالمية الممتعة لكرة القدم في الشرق الأوسط ومناطق أخرى؟", a:"بي إن سبورتس (BeIN Sports)"}, // Wait this starts with B. Let's provide a better one:
+                {q:"مشروب ساخن عشبي وعالمي واسع الانتشار يقدم بكثرة بالمجالس ويأتي باللون الأحمر المعتق أو الأخضر مع النعناع كدلالة على الضيافة والاسترخاء الدائم بعد وجبات الدسم الطويلة؟", a:"شاي (الشاي الأسود أو الأخضر)"},
+                {q:"نبات ضخم متجذر عميقاً في الأرض يتكون هيكله من جذع قوي وأغصان فروع خضراء ويقدم لنا الظل البارد والثمار اللذيذة كالتفاح والموز ويسهم في تنظيف الهواء بثاني أكسيد الكربون؟", a:"شجرة (الأشجار)"},
+                {q:"اللعبة اللوحية العقلية والتكتيكية الأشهر والأعرق في العالم والتي تعتمد على رقعة المربعات الأبيض والأسود والملك والمناورات بالوزير والفيل وتنمي الفكر للتطوير والحصار والفوز بالمات؟", a:"شطرنج (Chess)"}
+            ],
+            'ص': [
+                {q:"الجناح المصري العربي السريع والطائر لنادي ليفربول الإنجليزي وفخر العرب التاريخي والذي كان هدافاً للموسم بتحطيمه القواعد الأوربية لكرة القدم مسطراً أرقاماً ذهبية باسمه للمنطقه العربية؟", a:"صلاح (محمد صلاح)"},
+                {q:"المسلسل التاريخي الملحمي الشتوي الأعظم والمثير جداً للجدل الذي قدم عائلات ستارك الصامدة ولانيستر الذهبية واحتوى التنانين العملاقة وجدار الجليد المخيف في الشمال ضد الوايت واكرز الموتى؟", a:"صراع العروش (Game of Thrones)"},
+                {q:"طائر بري جارح شديد وقوي وسريع جداً ينقض بمكره الحاد على فريسته ومحبوب جداً بل ويعتز ويفتخر به الأثرياء في رياضة المقناص الخاصة بالعرب منذ سالف العصور؟", a:"صقر"},
+                {q:"دولة إمبريالية قوية ومارد اقتصادي مرعب في شرق قارة آسيا تعتبر من أكبر دول العالم سكاناً وبنت سوراً طويلاً لتحمي نفسها على مر العصور القديمة ضد المغول الزاحفين نحو حضارتها الشاسعة؟", a:"صين (الصين الشعبية)"}
+            ],
+            'ض': [
+                {q:"أسرع شيء موثق وفيزيائي في الكون المرصود على الإطلاق وتبلغ سرعته القصوى بالتقريب 300 ألف كيلومتر بالثانية العابرة للمجرات والفراغات بين النجوم الساخنة كشمسنا المتوهجة؟", a:"ضوء الكهرومغناطيسية (الضوء)"},
+                {q:"حيوان بري مفترس جائع من إفريقيا يُصدر نبرات وأصواتاً صاخبة عالية ومزعجة تشبه ضحك البشر المستهزئ تماماً ويأكل الجيف الميتة ويتعاون في قطعانه لمهاجمة فرائسه الضعيفة بالغابات المفتوحة؟", a:"ضبع"},
+                {q:"حيوان برمائي مائي وبري صغير وأخضر اللون يصدر صوت النقيق المشهور قرب البرك ويقفز ببراعة شديدة باصطياد الحشرات المتطايرة عبر لسان لزج وطويل جداً يصيب هدفه الطائر كالسوط الحاد؟", a:"ضفدع"}
+            ],
+            'ط': [
+                {q:"عاصمة الإمبراطورية في اليابان التكنولوجية الفائقة وأكثر المدن المتطورة المستمرة زحاماً واكتظاظاً مبنىً في العالم المتقدم المعاصر المشرق والممتد لتجمع التقاليد وناطحات السحاب التقنية؟", a:"طوكيو"},
+                {q:"المسلسل الرمضاني والكوميدي الاجتماعي السعودي والعربي الأيقوني والتاريخي الذي تم إنشاؤه لأجزاء متتالية من بطولة العمالقة ناصر القصبي برفقة عبدالله السدحان ليعالجوا القضايا بأسلوب ساخر المضحك؟", a:"طاش ما طاش"},
+                {q:"وسيلة مواصلات معدنية حديثة سريعة جداً ومجنحة نستخدمها يومياً للسفر وعبور المحيطات الهائلة بين قارات الدول وتحلق على ارتفاعات تفوق 30 ألف قدم فوق السحب العالية في الغلاف الجوي؟", a:"طائرة (الطائرات التجارية)"},
+                {q:"القائد المُسلم الأموي البربري الشهير الشجاع الذي قاد غزو وفتح وحكم بلاد الأندلس (إسبانيا الحالية) وسُمي المضيق المائي الفاصل بين المغرب وأوروبا تيمناً بعبوره التاريخي واسمه الصريح المبارك؟", a:"طارق بن زياد"}
+            ],
+            'ظ': [
+                {q:"اللاعب البرازيلي الأسطوري والهداف التاريخي الحقيقي السريع الذي عانى من الإصابات ورغم ذلك سحر العالم بكأس كوريا ورونالدو دي ليما واشتهر بقصة شعره الغريبة في النهائي، ولقب بـ (الـ...)؟", a:"الظاهرة (الظاهرة البرازيلية)"},
+                {q:"حيوان عاشب رشيق ونحيف وجميل يمتلك قروناً قوية يشبه الغزال ويعيش في الصحاري المفتوحة والسهاري الحارة العربية والأفريقية ويضرب ويعتمد عليه المثل الأسطوري في الرشاقة وقوة السرعة والتفادي واليقظة؟", a:"ظبي أو ظباء"},
+                {q:"الانعكاس الأسود الوهمي والمظلم المعتم الذي يظهر بشكلك ممدداً خلفك مرعباً عندما تقف ثابتاً أمام ضوء الشمس و يرافق الإنسان والأجسام في طريقها طول النهار كعلامة فيزيائية؟", a:"ظل"}
+            ],
+            'ع': [
+                {q:"لاعب محلي سعودي دولي بلمركز المدافع و يعتبر مشاكس كبير ومخلص في صفوف نادي الهلال الأزرق واجه واستفز ميسي ورونالدو وأضحك الجماهير بردة فعله، (اسمه الأول يبدأ بحرف العين)؟", a:"علي البليهي"},
+                {q:"الفيلم السينمائي المافياوي الدرامي الأيقوني العظيم من بطولة الأسطوري مارلون براندو برفقة المتألق آل باتشينو، المسمى إنجليزيا (The Godfather) والذي يعني بالعربية كلمة شهيرة تتكون من 4 أحرف؟", a:"عراب (العراب)"},
+                {q:"مهاجم وعملاق سوري ورياضي تاريخي، وهداف عظيم أسطوري مرعب للحراس ومخلص ارتدى رقم 9 لنادي الأهلي الكروي السعودي وسجل مقصية شهيرة وقاد فريقه لحصد الدوري الجداوي المستعصي؟", a:"عمر السومة"},
+                {q:"دولة عربية كبرى وعريقة وتعتبر محورية وغنية بالنفط، عاصمتها الدامية الجريحة بغداد وتسمى قديماً في التاريخ الإنساني ببلاد الرافدين لوجود نهرين مشهورين؟", a:"عراق (دولة العراق العربية)"}
+            ],
+            'غ': [
+                {q:"المدرب الإسباني التكتيكي والعبقري والفيلسوف الأصلع الذي درب برشلونة وبايرن ويقود مانشستر سيتي الإنجليزي الآن وسيطر واحتكر على البطولات بصناعة التيكي تاكا والتحركات الذكية التي يصعب فكها؟", a:"غوارديولا (بيب غوارديولا)"},
+                {q:"لاعب وكابتن المنتخب الويلزي السارق للألقاب الذي لعب ضمن BBC في ريال مدريد الملكي واشتهر بسرعته الخارقة الصاروخية وهدفه الشهير والجري المتفجر في نهائي كأس الملك رقصا ضد بارترا المسكين؟", a:"غاريث بيل (جاريث بيل)"},
+                {q:"وحش سينمائي ياباني عملاق وضخم جداً ومشحون إشعاعياً، يدمر المدن المزدحمة بشراسة ويحارب الوحوش الأخرى المرعبة والكايجوز (وواجه غريمه العنيف كينغ كونغ في فيلم الملحمة الجبارة الشهير)؟", a:"غودزيلا (Godzilla)"},
+                {q:"طائر أسود اللون وكئيب ذو منقار قاسي وذكي جداً في الحيلة ذُكر بالتفصيل التشريحي في القرآن الكريم في القصة المأساوية وقام بتعليم الإنسان وكأنه خبير دفن الموتى (كيف يواري سوءة أخيه قابيل؟)؟", a:"غراب"}
+            ],
+            'ف': [
+                {q:"لاعب برازيلي بطل دوري الأبطال مهاري ساحر حاسم ومراوغ شرس، يلعب حالياً بقميص ريال مدريد الإسباني برقم 7 واعتبر من أفضل المرشحين للكرة الذهبية لولا دراما التصويت والجدل الأخير؟", a:"فينسيوس جونيور (فيني)"},
+                {q:"مسلسل سيت كوم أمريكي أسطوري وكوميدي طويل يحكي قصة 6 أصدقاء يتقابلون باستمرار في نيويورك بالمقهى المركزي (تشاندلر ومونيكا وروس ورايتشل وجوي وفيبي) ويعتبر الأوسع شهرة تاريخياً؟", a:"فريندز (أصدقاء / Friends)"},
+                {q:"دولة ومنتخب أوروبي متألق لكرة القدم حقق بطولة كأس العالم العظيمة عام 2018 بروسيا، وعام 1998 في أراضيها وعاصمتها الحيوية والمضيئة باريس وتملك البرج المعدني الأشهر عالمياً وتعتمد على محترفيها الأفارقة؟", a:"فرنسا (الجمهورية الفرنسية)"}
+            ],
+            'ق': [
+                {q:"دولة خليجية غنية وصغيرة نظمت ببراعة فنية واستضافت أكبر وأعظم نسخة تنظيماً لكأس العالم لكرة القدم عـام 2022م الصيفي وفيها ملعب لوسيل الذهبي الضخم وعاصمتها الدوحة المتوهجة ليلا؟", a:"قطر"},
+                {q:"حيوان ثديي اجتماعي وذكي يتسلق الأشجار المرتفعة ببراعة ويمتلك يدين قويتين ويحب افتراس قطع الموز الحلوة والفاكهة وبعض المجموعات الضخمة المعاصرة منها لا تملك ذيلاً أبداً (مثل الغوريلا والشامبانزي)؟", a:"قرد أو قردة (من فصائل القردة)"},
+                {q:"المركز الميداني الأساسي والمتقدم للمهاجم الصلب الذي وظيفته التكتيكية الأساسية التمركز السريع والثابت في الخانات الأمامية وتدمير الدفاع لتسجيل وقنص الأهداف بلمسة واحدة مباغتة لشل الخصم؟", a:"قناص (مهاجم قناص صريح ولاعب الـ 9)"}
+            ],
+            'ك': [
+                {q:"صانع الألعاب البلجيكي الدولي الأشقر صاحب الوجه المحمر والعبقري التكتيكي الذي يصنع أهداف وإنجازات مانشستر سيتي بلمساته السحرية ورؤيته الفريدة الصعب توقعها ولعب الكرة بين المدافعين بسلاسة ويسر؟", a:"كيفين دي بروين (KDB)"},
+                {q:"بطل خارق من كوميكس وأفلام مارفل السينمائية كان جندياً قيادياً في الحرب العالمية وتم تجميده بجليد مقفر ليستيقظ سليماً في العصر الحديث ويحمل درعاً دائرياً بألوان العلم لا يُقهر يقذف به أعداءه ويرتد كالبمرنغ؟", a:"كابتن أمريكا (ستيف روجرز كابتن أمريكا)"},
+                {q:"الدولي الذي يرتدي الرقم التاريخي 7 وأساطير التشكيلة العظمى لمانشستر يونايتد ثم ريال مدريد والآن فخور النصر كُتبت المجلدات عن أرقامه الكروية وهوسه بتسجيل الأبطال والاحتفال بالصرخة الشهيرة Siuuuu؟", a:"كريستيانو رونالدو (الدون كريستيانو)"},
+                {q:"حيوان أليف يُضرب به المثل المستمر المخلص في الوفاء الأبدي والولاء المطلق التام لصاحبه ويستخدم بقوة لمهام الحراسة الأمنية الشديدة والصيد الكثيف ومرافقة أجهزة الشرطة بسبب حاسة شمه الفريدة القوية؟", a:"كلب بوليسي أو كلب عادي (الكلاب)"}
+            ],
+            'ل': [
+                {q:"أسطورة أرجنتينية في كرة القدم قاد منتخبه الكرواتي للفوز بكأس العالم الماسي 2022 بقطر وحقق الكرة الذهبية بعدد أسطوري وكأنه ساحر مراوغ لا يسقط أبداً واسمه الأول يبدأ باللام (نجم برشلونة الأسطوري وتاريخه المعظم)؟", a:"ليونيل ميسي (ليو ميسي)"},
+                {q:"نادي إنجليزي أحمر اللون وعريق بطولياً وتاريخياً حيث شعاره الجماهيري الخالد الذي يهتز الميدان لغنائه المنظم (لن تسير وحدك أبداً - You'll never walk alone) ويلعب فيه المصري البطل محمد صلاح بقوة هائلة مرعبة؟", a:"ليفربول (الريدز ليفربول)"},
+                {q:"مسلسل درامي إسباني وسرقة شهير جداً كسر الأرقام يدور بالكامل حول عملية سطو مُحكمة يقودها بحنكة عقل يسمى رمزياً (البروفيسور) مع طاقم بأسماء مدن لسرقة وإرعاب دار سك العملة؟", a:"لا كاسا دي بابيل (La Casa De Papel) أو البروفيسور"},
+                {q:"عاصمة المملكة المتحدة والتاج الملكي البريطاني والمالي وهي مدينة أوروبية ضبابية كبرى يمر عبر جسورها وأقواسها المعمارية العتيقة البارزة جسر البرج ونهر التايمز الواسع وتلقب في الأدب والشعر بمدينة الضباب والتاريخ؟", a:"لندن العاصمة (مدينة لندن)"}
+            ],
+            'م': [
+                {q:"أعرق وأكبر أندية إنجلترا المتوجة كروياً يرتدي اللون الأحمر الناري والتاريخي، ومقره ومعقله ملعب العريق (أولد ترافورد) الملقب جماهيرياً في الإعلام بمسرح الأحلام ودربه السير فيرغسون الأعظم؟", a:"مانشستر يونايتد (الشياطين الحمر مانشستر)"},
+                {q:"سلسلة أكشن وفلسفة ومؤثرات خيال علمي وثورية بصرية مبهرة جداً للممثل المذهل كيانو ريفز (مستر أندرسون / نيو) تدور أحداثها المحورية المعقدة حول مصفوفة عالم رقمي الوهم والتمرد على الآلات والهروب لمعرفة الحقيقة المروعة؟", a:"ماتريكس (The Matrix المصفوفة)"},
+                {q:"دولة عربية كبرى ومحورية تقع استراتيجياً وسياسياً شمال قارة أفريقيا ويمر بقوة في عروقها شريان ومورد نهر النيل العظيم العابر وفي مناطق صحاريها الجيزة تتخذ مسكناً أبدياً لأهرامات الفرعون الضخمة الخالدة العظيمة، تلقب ب(أم الدنيا)؟", a:"مصر (جمهورية مصر العربية)"}
+            ],
+            'ن': [
+                {q:"لاعب برازيلي دولي ساحر وممتع جداً في اختراعاته الكروية، لعب لبرشلونة الـ  MSNوباريس وسان جيرمان الفرنسي وانتقل لاحقاً بصفقة مدوية للقيادة الهجومية كقائد كابتن لدوري روشن السعودي نادي الهلال تحديداً بعد إصابات متعددة؟", a:"نيمار داسيلفا (نيمار)"},
+                {q:"نادي إنجليزي يعود لتوهجه الكروي التنافسي ويرتدي المخطط الأبيض والأسود المخطط (الماكبايس العتيق) استحوذ عليه رسمياً كليا صندوق الاستثمار السعودي وأحدث فيه ولادة ثورية ونهضة كروية واسعة ليعود لأبطال أوروبا مؤكداً؟", a:"نيوكاسل يونايتد (صندوق الاستثمارات نيوكاسل)"},
+                {q:"مسلسل أنمي ورسوم متحركة ياباني أسطوري وطويل جداً ومؤثر، بطله طفل يتيم ونينجا مستضعف يرتدي البرتقالي المنبوذ بداخله ثعلب مختوم بتسع ذيول مهولة ويقاتل بمثابرة ليصل ويحلم بأن يعترفوا به ويصبح يوماً (الهوكاجي) الأقوى؟", a:"ناروتو (ناروتو شيبودن Naruto)"}
+            ],
+            'هـ': [
+                {q:"نادي سعودي آسيوي كبير وعملاق أزرق اللون والزي يُلقب مراراً بـ (الزعيم) ومقره العاصمة السعودية الدائمة الرياض ويعتبر من أفضل وهو الأكثر تتويجاً في تاريخ وبطولات قارة آسيا بلا منازع ولا ندية محلياً وخارجياً للأندية المفتوحة الكبيرة؟", a:"هلال (الهلال السعودي العالمي)"},
+                {q:"سلسلة أفلام خيالية وسحر بريطانية وروايات ضخمة وممتعة تتحدث عن فتى ساحر يتيم الوالدين يمتلك ندبة صاعقة مميزة جداً في جبهته الملساء ويلتحق بمدرسة السحر المذهلة هوجورتس ليحارب القوة المظلمة الشرير المدمر فولدمورت لإنقاذ السحرة؟", a:"هاري بوتر (Harry Potter والندبة)"},
+                {q:"مدينة وفضاء فني ومقاطعة أمريكية تعتبر المقر الأساسي والرئيسي وعاصمة صناعة المجد والسينما العالمية التجارية الخالدة وتحتضن قصور وشركات نجوم وعمالقة ومخرجي التمثيل العالميين أجمعين ولديها لافتة جبلية بيضاء بأحرف ضخمة تعلو تلالها؟", a:"هوليود (مدينة هوليود / Hollywood)"},
+                {q:"أنمي دموي وشهير جداً يتحدث عن عمالقة يأكلون البشر وأسوار ضخمة تحمي الإنسانية المتبقية، وبطله إيرين ييغر؟", a:"هجوم العمالقة (Attack on Titan)"}
+            ],
+            'و': [
+                {q:"أسطورة و مهاجم مشاغب كروي هجومي في تاريخ إنجلترا وناديها مانشستر يونايتد الدموية يُلقب بالفتى الذهبي الخارق ورقم قميصه كان 10 ويعتبر من الأقوى بدنياً والممتلئ في المراوغة وتسديداته مرعبة؟", a:"واين روني (الجولدن بوي واين روني)"},
+                {q:"ممثل ونجم أمريكي أسمر ونجماً كوميدياً وأكشن محبوب منذ أمير بيل إير، استعاد وهج بطل فيلم ويل سميث (Men in Black) وصدم العالم وصفع المذيع الزميل بقوة في حفل الأوسكار الدفاعي عن زوجته؟", a:"ويل سميث (الفنان الأيقونة ويل سميث)"},
+                {q:"نبات زاهي الألوان البراقة ورومنسي جداً ذو رائحة عطرة فواحة ومميزة غالباً ما يهدى في المناسبات المبهجة والأفراح تعبيراً عن المحبة الخالصة والإعجاب الصادق وتتميز بعض أنواعه الناعمة بوجود أشواك مريعة حول جذعه للدفاع عن جمالها؟", a:"ورد (الأزهار الحمراء أو الجوري وردة)"}
+            ],
+            'ي': [
+                {q:"نادي إيطالي تورينو عريق بقميص مخطط بالأبيض والأسود الكلاسيكي (البيانكونيري الشهير) ويطلق عليه مجازياً وتاريخياً لقب السيدة العجوز الموقرة ولعب في صفوفه الأساطير بوفون وماراديز وميشيل بلاتيني وكريستيانو المتألق وديل بييرو وغيرهم الكثير؟", a:"يوفنتوس (نادي يوفنتوس الإيطالي)"},
+                {q:"اللاعب الإسباني المراهق المعجزة الشاب المتألق من أصول مغربية لامعة والذي أبهر العالم بالسرعة والمراوغة وتألق بقوة صاروخية مبكرة جداً في بطولة أمم أوروبا 2024م متوجاً مع بلاده ليحصل على جائزة أصغر بطل وأعلى قيمة تسويقية لموهبة صاعدة يافعة؟", a:"يامال (لامين يامال نجم برشلونة)"},
+                {q:"كوكب ومكان تقني هندسي واقتصادي عظيم ومتطور يقع في أقصى شرق قارة أسيا الممتدة عاصمته الحضرية الشاهقة طوكيو ويطلق عليه (كوكب ..) بسبب اختراعاته وثقافته الغريبة وأخلاقيات مجتمعه النظيف والمنظم الصامت، وعلمهم أبيض تتوسطه نقطة شمس حمراء؟", a:"يابان (دولة كوكب اليابان اليابانية)"}
+            ],
+            '★': [
+                {q:"لاعب كرة المضرب صربي أسطوري لا يهزم، وهو الفائز بأكبر عدد تاريخي من بطولات التنس الجراند سلام ومؤخراً حصل ببسالة على ميدالية الأولمبياد الذهبية بباريس ليختم مسيرة كأعظم رياضي؟", a:"نوفاك ديوكوفيتش"},
+                {q:"المسلسل التاريخي الأسطوري التلفزيوني الجريء الذي يدور حول عالم وعصابة تجارة المافيا العنيفة المتمردة وتدوير العملات في أزقة مدينة برمنغهام الإنجليزية الصناعية وبطله الأنيق الماكر والقاتل شخصية تومي شيلبي وحيله المميتة؟", a:"بيكي بلايندرز (Peaky Blinders برمنغهام)"},
+                {q:"المنتخب الإفريقي المغربي المسلم والصلب القوي الذي حقق وكسر إنجازاً غير مسبوق بالصمود والإطاحة بالكبار والوصول كالجبال للدور نصف النهائي العظيم والبطولي في تفصيل بطولة كأس العالم الكروية في قطر 2022 للمرة الأولى عربياً وأفريقياً وقدم نجومه أداء دفاعيا شرسا؟", a:"المنتخب المغربي (أسود الأطلس / منتخب المغرب الوطني)"},
+                {q:"المخرج السينمائي البريطاني العبقري الجدي صاحب الرؤية المعقدة في طرح نظريات السفر عبر الزمن والأكوان، و الذي أخرج وأشرف على أفلام عظيمة غيرت السينما للأبد مثل (Interstellar) المذهل و(Oppenheimer) المتفجر حديثاً المربك للعقول والأفكار الفيزيائية العميقة البارزة؟", a:"كريستوفر نولان (المخرج الذكي كريستوفر نولان)"},
+                {q:"سلسلة الروايات والقصص الكونية السينمائية الخيالية الحديثة التي تحكي فصول قصة ملحمية وصراعات في كوكب صحراوي جاف ومقفر يسمى 'أراكيس' الرهيب، حيث تتقاتل العشائر العظمى والمنازل الملكية بشراسة على استخراج والسيطرة التامة على ممر طاقة ثمينة تسمى بودرة 'السبايس'، من بطولة تيموثي شالاميت وزيندايا؟", a:"كثيب أراكيس (Dune فيلم الرواية ديون المخيف)"}
+            ]
+        };
+
+        const allLetters = Object.keys(questionsDB);
+        const rowLayout = [5, 6, 7, 6, 5];
+
+        let currentSelectedCellId = null;
+        let boardState = {}; // cellId -> 'blue' | 'red' | null
+        let lettersLayout = {}; // cellId -> letter
+        let scores = { blue: 0, red: 0 };
+        let roundsWon = { blue: 0, red: 0 };
+        let teamNames = { blue: "الفريق الأزرق", red: "الفريق الأحمر" };
+        let teamJokers = { blue: 1, red: 1 };
+        let currentLetterAnswer = "";
+        let isGameOver = false;
+        let winState = null; // { team, isMatchWin }
+        
+        let roundsGoal = 3;
+        let gameTitle = "حروف مع طلال";
+        let usedQuestions = {}; 
+        
+        // Multi-screen Mode
+        let isHost = true;
+        let lastSoundTime = 0;
+
+        let evtSource = null;
+
+        function showRoleSelection() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            document.getElementById('startMenuOverlay').style.display = 'none';
+            document.getElementById('roleOverlay').style.display = 'flex';
+        }
+
+        function showInstructions() {
+            document.getElementById('instructionsOverlay').classList.add('active');
+        }
+
+        function closeInstructions() {
+            document.getElementById('instructionsOverlay').classList.remove('active');
+        }
+
+        function selectRole(role) {
+            document.getElementById('roleOverlay').style.display = 'none';
+            if (role === 'board') {
+                isHost = false;
+                document.getElementById('mainSettingsBtn').style.display = 'none';
+                document.querySelector('.controls').style.display = 'none';
+                
+                document.getElementById('roundsGoalDisplay').innerText = `بانتظار تلقي الإشارة من المُقدم ⏳...`;
+                
+                if (evtSource) evtSource.close();
+                evtSource = new EventSource('/events');
+                evtSource.onmessage = (e) => applyState(JSON.parse(e.data));
+                
+            } else {
+                isHost = true;
+                if (evtSource) { evtSource.close(); evtSource = null; }
+                initRound();
+            }
+        }
+
+        function syncToStorage(soundType = null) {
+            if (!isHost) return;
+            const state = {
+                boardState, scores, roundsWon, gameTitle, roundsGoal, lettersLayout, isGameOver, winState, teamNames, teamJokers,
+                activeCellId: currentSelectedCellId,
+                timestamp: Date.now(),
+                soundTrigger: soundType ? { type: soundType, time: Date.now() } : null
+            };
+            
+            fetch('/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(state)
+            }).catch(e => console.error("Error syncing state to server:", e));
+        }
+
+        function applyState(state) {
+            if (!state || !state.lettersLayout) return;
+            if (gameTitle !== state.gameTitle || roundsGoal !== state.roundsGoal || JSON.stringify(teamNames) !== JSON.stringify(state.teamNames)) {
+                gameTitle = state.gameTitle || "حروف مع طلال";
+                roundsGoal = state.roundsGoal || 3;
+                teamNames = state.teamNames || { blue: "الفريق الأزرق", red: "الفريق الأحمر" };
+                document.getElementById('mainTitle').innerText = gameTitle + " 🐝";
+                document.getElementById('roundsGoalDisplay').innerText = `الهدف: الفوز في ${roundsGoal} جولات 🏆`;
+                document.getElementById('titleBlue').innerText = `🔵 ${teamNames.blue}`;
+                document.getElementById('titleRed').innerText = `🔴 ${teamNames.red}`;
+            }
+
+            teamJokers = state.teamJokers || { blue: 1, red: 1 };
+            boardState = state.boardState;
+            scores = state.scores;
+            roundsWon = state.roundsWon;
+            lettersLayout = state.lettersLayout;
+            currentSelectedCellId = state.activeCellId;
+            isGameOver = state.isGameOver;
+            winState = state.winState;
+
+            // Redraw board if layout changed or newly initialized
+            const board = document.getElementById('board');
+            if (board.children.length === 0 || board.dataset.layout !== JSON.stringify(lettersLayout)) {
+                drawBoardUI();
+                board.dataset.layout = JSON.stringify(lettersLayout);
+            }
+            applyBoardStateUI();
+            updateScoreboard();
+
+            if (winState) {
+                showWinModal(winState.team, winState.isMatchWin);
+            } else {
+                document.getElementById('winModalOverlay').classList.remove('active');
+            }
+
+            if (state.soundTrigger && state.soundTrigger.time !== lastSoundTime) {
+                lastSoundTime = state.soundTrigger.time;
+                let t = state.soundTrigger.type;
+                if (t === 'tick') playTick();
+                if (t === 'assign') playAssign();
+                if (t === 'confettiBlue') { launchConfetti(['#3b82f6', '#1e3a8a']); launchFlash('blue'); }
+                if (t === 'confettiRed') { launchConfetti(['#ef4444', '#7f1d1d']); launchFlash('red'); }
+                if (t === 'winTune') playWinTune();
+                if (t === 'sound_correct') playHostSound('correct');
+                if (t === 'sound_wrong') playHostSound('wrong');
+                if (t === 'bigConfetti') {
+                    if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 } });
+                }
+            }
+        }
+
+        // إعدادات اللعبة
+        function openSettings() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            document.getElementById('settingsModalOverlay').classList.add('active');
+            document.getElementById('gameNameInput').value = gameTitle;
+            document.getElementById('blueTeamInput').value = teamNames.blue;
+            document.getElementById('redTeamInput').value = teamNames.red;
+            document.getElementById('roundsGoalInput').value = roundsGoal;
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModalOverlay').classList.remove('active');
+        }
+
+        function saveSettings() {
+            gameTitle = document.getElementById('gameNameInput').value || gameTitle;
+            if(document.getElementById('blueTeamInput').value) teamNames.blue = document.getElementById('blueTeamInput').value;
+            if(document.getElementById('redTeamInput').value) teamNames.red = document.getElementById('redTeamInput').value;
+            const parsedRounds = parseInt(document.getElementById('roundsGoalInput').value);
+            roundsGoal = (parsedRounds > 0 && parsedRounds <= 10) ? parsedRounds : roundsGoal;
+            
+            document.getElementById('mainTitle').innerText = gameTitle + " 🐝";
+            document.getElementById('roundsGoalDisplay').innerText = `الهدف: الفوز في ${roundsGoal} جولات 🏆`;
+            document.getElementById('titleBlue').innerText = `🔵 ${teamNames.blue}`;
+            document.getElementById('titleRed').innerText = `🔴 ${teamNames.red}`;
+            
+            closeSettings();
+            hardResetGame();
+            syncToStorage();
+        }
+
+        // التفاف لخلايا لوحة العسل
+        function rowColToIndex(r, c) {
+            const startIndices = [0, 5, 11, 18, 24];
+            return startIndices[r] + c;
+        }
+
+        function getNeighbors(r, c) {
+            const neighbors = [];
+            neighbors.push({r: r, c: c - 1});
+            neighbors.push({r: r, c: c + 1});
+            
+            if (r === 0) {
+                neighbors.push({r: 1, c: c});
+                neighbors.push({r: 1, c: c + 1});
+            } else if (r === 1) {
+                neighbors.push({r: 0, c: c - 1});
+                neighbors.push({r: 0, c: c});
+                neighbors.push({r: 2, c: c});
+                neighbors.push({r: 2, c: c + 1});
+            } else if (r === 2) {
+                neighbors.push({r: 1, c: c - 1});
+                neighbors.push({r: 1, c: c});
+                neighbors.push({r: 3, c: c - 1});
+                neighbors.push({r: 3, c: c});
+            } else if (r === 3) {
+                neighbors.push({r: 2, c: c});
+                neighbors.push({r: 2, c: c + 1});
+                neighbors.push({r: 4, c: c - 1});
+                neighbors.push({r: 4, c: c});
+            } else if (r === 4) {
+                neighbors.push({r: 3, c: c});
+                neighbors.push({r: 3, c: c + 1});
+            }
+            
+            return neighbors.filter(n => {
+                if (n.r < 0 || n.r > 4) return false;
+                if (n.r === 0 && (n.c < 0 || n.c >= 5)) return false;
+                if (n.r === 1 && (n.c < 0 || n.c >= 6)) return false;
+                if (n.r === 2 && (n.c < 0 || n.c >= 7)) return false;
+                if (n.r === 3 && (n.c < 0 || n.c >= 6)) return false;
+                if (n.r === 4 && (n.c < 0 || n.c >= 5)) return false;
+                return true;
+            });
+        }
+
+        // خوارزمية اكتشاف المسار
+        function checkWin(team) {
+            let startNodes = [];
+            let isEndNode = (r, c) => false;
+
+            if (team === 'blue') {
+                for(let c=0; c<5; c++) startNodes.push({r: 0, c: c});
+                isEndNode = (r, c) => r === 4;
+            } else if (team === 'red') {
+                startNodes.push({r: 0, c: 0}, {r: 1, c: 0}, {r: 2, c: 0}, {r: 3, c: 0}, {r: 4, c: 0});
+                isEndNode = (r, c) => {
+                    if(r===0 && c===4) return true;
+                    if(r===1 && c===5) return true;
+                    if(r===2 && c===6) return true;
+                    if(r===3 && c===5) return true;
+                    if(r===4 && c===4) return true;
+                    return false;
+                };
+            }
+
+            let visited = new Set();
+            let queue = [...startNodes];
+
+            while(queue.length > 0) {
+                const curr = queue.shift();
+                const cellId = `cell-${rowColToIndex(curr.r, curr.c)}`;
+                
+                if (boardState[cellId] !== team) continue;
+                
+                const key = `${curr.r},${curr.c}`;
+                if (visited.has(key)) continue;
+                visited.add(key);
+
+                if (isEndNode(curr.r, curr.c)) return true;
+
+                const neighbors = getNeighbors(curr.r, curr.c);
+                for(let n of neighbors) queue.push(n);
+            }
+            return false;
+        }
+
+        function showWinModal(team, isMatchWin) {
+            const overlay = document.getElementById('winModalOverlay');
+            const msg = document.getElementById('winMessage');
+            const title = document.getElementById('winTitle');
+            const subMsg = document.getElementById('winSubMessage');
+            const nextBtn = document.getElementById('nextRoundBtn');
+            const resetBtn = document.getElementById('resetMatchBtn');
+            
+            if(team === 'blue') {
+                msg.innerText = "الفريق الأزرق 🔵"; msg.style.color = "#3b82f6";
+            } else {
+                msg.innerText = "الفريق الأحمر 🔴"; msg.style.color = "#ef4444";
+            }
+            
+            if (isMatchWin) {
+                title.innerText = "🏆 بطل المباراة 🏆";
+                subMsg.innerText = `مبروك! انتصر الفريق وحسم المعركة الكبرى بنجاح ساحق!`;
+                nextBtn.style.display = 'none';
+                resetBtn.style.display = isHost ? 'inline-block' : 'none';
+            } else {
+                title.innerText = "🎖️ فائز الجولة 🎖️";
+                subMsg.innerText = "نجح الفريق باختراق اللوحة وصناعة مسار كامل من البداية للنهاية!";
+                nextBtn.style.display = isHost ? 'inline-block' : 'none';
+                resetBtn.style.display = 'none';
+            }
+            
+            overlay.classList.add('active');
+            
+            const end = Date.now() + 5 * 1000;
+            const colors = team === 'blue' ? ['#3b82f6', '#ffffff', '#1e3a8a'] : ['#ef4444', '#ffffff', '#7f1d1d'];
+            
+            const interval = setInterval(() => {
+                if (Date.now() > end) {
+                    clearInterval(interval);
+                    return;
+                }
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 20, angle: 60, spread: 55, origin: { x: 0 }, colors: colors, disableForReducedMotion: true });
+                    confetti({ particleCount: 20, angle: 120, spread: 55, origin: { x: 1 }, colors: colors, disableForReducedMotion: true });
+                }
+            }, 250);
+        }
+
+        // احتفال الفوز مع إدارة الجولات والمباراة
+        function triggerWinCelebration(team) {
+            if (!isHost) return;
+            isGameOver = true;
+            roundsWon[team]++;
+            
+            const isMatchWin = roundsWon[team] >= roundsGoal;
+            winState = { team, isMatchWin };
+            
+            updateScoreboard();
+            showWinModal(team, isMatchWin);
+            
+            playWinTune();
+            syncToStorage('winTune');
+        }
+
+        function shuffleArray(array) {
+            let arr = array.slice();
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function drawBoardUI() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            let letterIndex = 0;
+
+            rowLayout.forEach((count, rowIndex) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'hex-row';
+
+                for (let i = 0; i < count; i++) {
+                    const cellId = `cell-${letterIndex}`;
+                    const letter = lettersLayout[cellId] || "";
+                    
+                    const hexWrap = document.createElement('div');
+                    hexWrap.className = 'hex-wrap';
+                    hexWrap.id = cellId;
+                    
+                    const hexInner = document.createElement('div');
+                    hexInner.className = 'hex-inner';
+                    hexInner.innerText = letter;
+
+                    hexWrap.appendChild(hexInner);
+                    hexWrap.onclick = () => { if(isHost) openModal(cellId, letter); };
+                    
+                    rowDiv.appendChild(hexWrap);
+                    letterIndex++;
+                }
+                board.appendChild(rowDiv);
+            });
+        }
+
+        function applyBoardStateUI() {
+            Object.keys(lettersLayout).forEach(cellId => {
+                const cell = document.getElementById(cellId);
+                if (!cell) return;
+                cell.className = 'hex-wrap'; // Reset
+                if (boardState[cellId] === 'blue') cell.classList.add('team-blue');
+                else if (boardState[cellId] === 'red') cell.classList.add('team-red');
+                else if (!isHost && currentSelectedCellId === cellId) cell.classList.add('active-question');
+            });
+        }
+
+        function initRound() {
+            if (!isHost) return;
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            boardState = {};
+            lettersLayout = {};
+            scores = { blue: 0, red: 0 };
+            teamJokers = { blue: 1, red: 1 };
+            isGameOver = false;
+            winState = null;
+            currentSelectedCellId = null;
+            updateScoreboard();
+            document.getElementById('winModalOverlay').classList.remove('active');
+
+            const shuffledLetters = shuffleArray(allLetters);
+            let letterIndex = 0;
+            rowLayout.forEach((count) => {
+                for (let i = 0; i < count; i++) {
+                    const cellId = `cell-${letterIndex}`;
+                    lettersLayout[cellId] = shuffledLetters[letterIndex];
+                    boardState[cellId] = null;
+                    letterIndex++;
+                }
+            });
+            drawBoardUI();
+            applyBoardStateUI();
+            syncToStorage();
+        }
+
+        function hardResetGame() {
+            if (!isHost) return;
+            if(confirm('هل أنت متأكد من رغبتك في مسح اللوحة وتصفير جميع الجولات التراكمية؟')) {
+                roundsWon = { blue: 0, red: 0 };
+                usedQuestions = {};
+                initRound();
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 100, spread: 120, origin: { y: 0.5 }, disableForReducedMotion: true });
+                }
+                syncToStorage('bigConfetti');
+            }
+        }
+
+        const shortQuestionsDB = {
+            'أ': [{q:"أسطورة كرة قدم أرجنتيني اشتهر بهدف بيده ضد إنجلترا؟", a:"مارادونا"},{q:"أنجح فيلم سينمائي في التاريخ (كائنات زرقاء)؟", a:"أفاتار"},{q:"نادي إنجليزي لونه أحمر يُلقب بـ (المدفعجية)؟", a:"أرسنال"},{q:"أكبر قارة في العالم؟", a:"آسيا"},{q:"أنمي شهير عن القراصنة وبطله لوفي؟", a:"ون بيس"},{q:"سلسلة ألعاب دموية للبلايستيشن بطلها كريتوس؟", a:"إله الحرب"}],
+            'ب': [{q:"نادي إسباني عريق يقع في إقليم كتالونيا؟", a:"برشلونة"},{q:"بطل خارق يرتدي زي خفاش ويحمي مدينة غوثام؟", a:"باتمان"},{q:"مسلسل شهير عن مدرس كيمياء يتحول لتاجر ممنوعات؟", a:"بريكينج باد"},{q:"دولة فازت بكأس العالم 5 مرات؟", a:"البرازيل"},{q:"نادي ألماني يُلقب بـ (العملاق البافاري)؟", a:"بايرن ميونخ"}],
+            'ت': [{q:"فيلم كلاسيكي شهير غرقت فيه أضخم سفينة؟", a:"تايتانيك"},{q:"نادي إنجليزي لندني يُعرف بـ (السبيرز) أو الديوك؟", a:"توتنهام"},{q:"ممثل هوليودي يشتهر بأداءاته الخطيرة في (مهمة مستحيلة)؟", a:"توم كروز"},{q:"نادي لندني يُلقب بـ (البلوز / أسود لندن)؟", a:"تشيلسي"},{q:"دولة عربية تشتهر بنادي الترجي ونسور قرطاج؟", a:"تونس"}],
+            'ث': [{q:"إله الرعد في مارفل وصاحب مطرقة الميولنير؟", a:"ثور"},{q:"حيوان مفترس يشتهر في القصص بالغدر والذكاء؟", a:"ثعلب"},{q:"حالة الماء عندما يتجمد ويتساقط في الشتاء؟", a:"ثلج"},{q:"الشرير البنفسجي الذي أباد نصف الكون في مارفل؟", a:"ثانوس"}],
+            'ج': [{q:"سلسلة أكشن عن قاتل محترف ينتقم بسبب كلبه؟", a:"جون ويك"},{q:"الشخصية المجنونة والعدو اللدود لباتمان؟", a:"جوكر"},{q:"ممثل أمريكي أتقن دور زعيم القراصنة جاك سبارو؟", a:"جوني ديب"},{q:"دولة عربية تُلقب ببلد المليون ونصف المليون شهيد؟", a:"الجزائر"}],
+            'ح': [{q:"اللاعب الوحيد المسموح له بمسك الكرة بيده؟", a:"حارس مرمى"},{q:"حيوان قوي وسريع يستخدم في سباقات الفروسية؟", a:"حصان (خيل)"},{q:"مدينة سورية عريقة ذات قلعة تعتبر الأقدم عالمياً؟", a:"حلب"}],
+            'خ': [{q:"سلسلة أفلام خيالية ملحمية عن قزم يحمل خاتماً لتدميره؟", a:"سيد الخواتم"},{q:"حيوان يطير ليلاً وينام مقلوباً، ألهم زي باتمان؟", a:"خفاش"},{q:"مسطح مائي يفصل بين شبه الجزيرة العربية وإيران؟", a:"الخليج العربي"}],
+            'د': [{q:"بطل مارفل الثرثار الذي يرتدي زياً أحمر وقاتل مع ولفيرين؟", a:"ديدبول"},{q:"ممثل بطل فيلم تايتانيك الذي انتظر الأوسكار طويلاً؟", a:"دي كابريو"},{q:"نادي كرة قدم ألماني يشتهر بملعبه الأسود والأصفر؟", a:"دورتموند"},{q:"صانع ألعاب بلجيكي وعقل مانشستر سيتي الأول؟", a:"دي بروين"},{q:"أنمي شهير يتحدث عن مذكرة موت تسقط من الشينيغامي؟", a:"ديث نوت"}],
+            'ذ': [{q:"حيوان مفترس يعوي في الليالي ويعيش في قطعان؟", a:"ذئب"},{q:"معدن أصفر نفيس لا يصدأ أبداً ومرتبط بالثروة؟", a:"ذهب"},{q:"حشرة طائرة طفيلية ومزعجة ضُرب بها المثل في القرآن؟", a:"ذبابة"}],
+            'ر': [{q:"نادي إسباني عملاق يُلقب بالميرنجي والأكثر تتويجاً في أوروبا؟", a:"ريال مدريد"},{q:"أسطورة برتغالية يُلقب بـ الدون ويلعب للنصر؟", a:"رونالدو"},{q:"عاصمة إيطاليا ونادي إيطالي ارتدى قميصه توتي؟", a:"روما"},{q:"الممثل الذي لعب دور الملياردير العبقري (آيرون مان)؟", a:"روبرت داوني"}],
+            'ز': [{q:"أسطورة فرنسية حقق كأس العالم ومدرب ريال مدريد التاريخي؟", a:"زيدان"},{q:"كائنات مرعبة وموتى أحياء تتغذى على البشر؟", a:"زومبي"},{q:"أطول حيوان على سطح اليابسة يعتمد على أكل ورق الشجر؟", a:"زرافة"},{q:"الكوكب الذي يحيط به حلقات غازية وجليدية ضخمة؟", a:"زحل"}],
+            'س': [{q:"بطل خارق هبط من كوكب كريبتون ويرتدي زياً أزرق وأحمر؟", a:"سوبرمان"},{q:"بطل مارفل الشاب الذي لدغته عنكبوت معدلة وراثياً؟", a:"سبايدرمان"},{q:"نادي إنجليزي سماوي اللون حقق الثلاثية مع غوارديولا؟", a:"مانشستر سيتي"},{q:"لاعب سعودي بالهلال وصاحب هدف التورنيدو ضد الأرجنتين؟", a:"سالم الدوسري"}],
+            'ش': [{q:"شخصية محقق بريطاني عبقري ابتكره آرثر كونان دويل؟", a:"شيرلوك هولمز"},{q:"مشروب عشبي وعالمي واسع الانتشار يقدم مع النعناع؟", a:"شاي"},{q:"الاسم الشائع للنباتات الضخمة التي توفر لنا الخشب؟", a:"شجرة"},{q:"لعبة لوحية تكتيكية تعتمد على رقعة ومناورات عقلية؟", a:"شطرنج"}],
+            'ص': [{q:"الجناح المصري السريع لنادي ليفربول وأحد أساطيره الحالية؟", a:"محمد صلاح"},{q:"مسلسل تاريخي ملحمي ظهرت فيه التنانين وصراع العائلات؟", a:"صراع العروش"},{q:"طائر بري جارح وسريع يعتز به في رياضة المقناص؟", a:"صقر"},{q:"دولة قوية في شرق آسيا بنوا سوراً عظيماً قديماً؟", a:"الصين"}],
+            'ض': [{q:"أسرع شيء في الكون تبلغ سرعته 300 ألف كم/ثانية؟", a:"الضوء"},{q:"حيوان مفترس يُصدر صوتاً يشبه الضحك ويأكل الجيف؟", a:"ضبع"},{q:"حيوان برمائي يقفز ببراعة ويصطاد الحشرات بلسانه الطويل؟", a:"ضفدع"}],
+            'ط': [{q:"عاصمة اليابان وأكثر المدن المتطورة زحاماً في العالم؟", a:"طوكيو"},{q:"المسلسل الرمضاني السعودي الأيقوني لـ ناصر وعبدالله؟", a:"طاش ما طاش"},{q:"وسيلة مواصلات حديثة تطير لآلاف الأقدام بين الدول؟", a:"طائرة"},{q:"القائد المُسلم الفاتح الذي سُمي مضيق جبل طارق باسمه؟", a:"طارق بن زياد"}],
+            'ظ': [{q:"اللاعب البرازيلي رونالدو دي ليما، صاحب لقب (الـ...)؟", a:"الظاهرة"},{q:"حيوان عاشب رشيق يشبه الغزال يُضرب به المثل بالسرعة؟", a:"ظبي"},{q:"الانعكاس المعتم الذي يظهر خلفك عندما تقف أمام الشمس؟", a:"ظل"}],
+            'ع': [{q:"مدافع هلالي مشاكس عُرف باستفزازه لميسي ورونالدو؟", a:"علي البليهي"},{q:"فيلم مافيا أيقوني شهير لمارلون براندو وآل باتشينو؟", a:"العراب"},{q:"دولة عربية عاصمتها بغداد وتسمى تاريخياً بلاد الرافدين؟", a:"العراق"}],
+            'غ': [{q:"المدرب الإسباني الفيلسوف الذي قاد إنجازات السيتي؟", a:"غوارديولا"},{q:"كابتن ويلز السريع صاحب الهدف الراقص في نهائي الكأس؟", a:"غاريث بيل"},{q:"وحش ياباني سينمائي عملاق ومشع يدمر المدن وواجه كونغ؟", a:"غودزيلا"},{q:"طائر أسود اللون ذُكر بالقرآن ويعتبر ذكياً في دفن الموتى؟", a:"غراب"}],
+            'ف': [{q:"لاعب برازيلي بطل ريال مدريد الذي يرتدي رقم 7 حالياً؟", a:"فينيسيوس"},{q:"مسلسل سيت كوم أسطوري عن 6 أصدقاء يتقابلون بمقهى نيويورك؟", a:"فريندز"},{q:"دولة أوروبية حققت كأس العالم 2018 وعاصمتها باريس؟", a:"فرنسا"}],
+            'ق': [{q:"دولة خليجية نظمت كأس العالم 2022 باحترافية وتألق؟", a:"قطر"},{q:"حيوان ذكي يتسلق الأشجار ويحب الموز، منه أنواع الشامبانزي؟", a:"قرد"},{q:"المركز الذي يعتمد على قنص الأهداف بلمسة واحدة مباغتة؟", a:"قناص"}],
+            'ك': [{q:"بطل مارفل كان جندياً في الحرب وتجمد ليستيقظ حاملاً درعاً؟", a:"كابتن أمريكا"},{q:"حيوان أليف يُضرب به المثل في الوفاء والولاء المطلق لصاحبه؟", a:"كلب"},{q:"نجم البرتغال التاريخي وهداف النصر، صاحب صرخة Siuuuu؟", a:"كريستيانو رونالدو"}],
+            'ل': [{q:"الأسطورة الأرجنتينية الخالدة الفائز بكأس العالم 2022؟", a:"ميسي"},{q:"نادي إنجليزي أحمر شعاره (لن تسير وحدك أبداً)؟", a:"ليفربول"},{q:"مسلسل إسباني شهير عن سرقة دار سك العملة بقيادة البروفيسور؟", a:"لا كاسا دي بابيل"},{q:"عاصمة بريطانيا ومدينة الضباب العريقة الشهيرة بنهر التايمز؟", a:"لندن"}],
+            'م': [{q:"أعرق أندية إنجلترا يرتدي الأحمر ويسمى الشياطين الحمر؟", a:"مانشستر يونايتد"},{q:"فيلم خيال علمي وفلسفي لكيانو ريفز عن العالم الرقمي الوهمي؟", a:"ماتريكس"},{q:"دولة عربية كبرى بها مجرى نهر النيل والأهرامات الشامخة؟", a:"مصر"}],
+            'ن': [{q:"اللاعب البرازيلي الساحر الذي قاد هجوم برشلونة ثم الهلال؟", a:"نيمار"},{q:"أنمي ياباني يحكي قصة نينجا بداخله وحش يسعى ليصبح هوكاجي؟", a:"ناروتو"}],
+            'هـ': [{q:"نادي آسيوي وسعودي عريق باللون الأزرق يُلقب بالزعيم؟", a:"الهلال"},{q:"سلسلة أفلام لفتى يتيم يمتلك ندبة صاعقة يحارب لورد فولدمورت؟", a:"هاري بوتر"},{q:"أنمي دموي شهير لأشخاص يطيرون بأسلحة ويحاربون عمالقة البشر؟", a:"هجوم العمالقة"}],
+            'و': [{q:"الفتى الذهبي السابق في الهجوم الإنجليزي ومانشستر يونايتد؟", a:"روني"},{q:"الممثل الأسمر الأمريكي صاحب صفعة الأوسكار الشهيرة؟", a:"ويل سميث"},{q:"نبات زاهي الألوان يهدى في المناسبات تعبيراً عن المحبة؟", a:"ورد"}],
+            'ي': [{q:"نادي إيطالي تورينو بالأسود والأبيض يطلق عليه السيدة العجوز؟", a:"يوفنتوس"},{q:"اللاعب الشاب الإسباني والمعجزة الصاعدة الذي حقق يورو 2024م؟", a:"لامين يامال"},{q:"كوكب اقتصادي وتقني عظيم بشرق آسيا عاصمته الحضرية طوكيو؟", a:"اليابان"}],
+            '★': [{q:"لاعب تنس صربي صاحب الرقم القياسي لألقاب الجراند سلام؟", a:"دجوكوفيتش"},{q:"منتخب عربي أسطوري أطاح بالكبار ووصل لنصف نهائي مونديـال قطر؟", a:"المغرب"}]
+        };
+
+        function fetchQuestionData(letter) {
+            const questions = shortQuestionsDB[letter] || questionsDB[letter];
+            if (questions && questions.length > 0) {
+                if (!usedQuestions[letter]) usedQuestions[letter] = [];
+                
+                let availableIndices = [];
+                for (let i = 0; i < questions.length; i++) {
+                    if (!usedQuestions[letter].includes(i)) availableIndices.push(i);
+                }
+                
+                if (availableIndices.length === 0) {
+                    usedQuestions[letter] = [];
+                    for (let i = 0; i < questions.length; i++) availableIndices.push(i);
+                }
+                
+                const randomChoice = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+                usedQuestions[letter].push(randomChoice); 
+                
+                const randomQ = questions[randomChoice];
+                document.getElementById('modalQuestion').innerText = randomQ.q;
+                currentLetterAnswer = randomQ.a;
+            } else {
+                document.getElementById('modalQuestion').innerText = "لا يوجد سؤال مسجل.";
+                currentLetterAnswer = "-";
+            }
+        }
+
+        function openModal(cellId, letter) {
+            if(isGameOver || !isHost) return;
+            playTick();
+            currentSelectedCellId = cellId;
+            document.getElementById('modalLetter').innerText = letter;
+            
+            fetchQuestionData(letter);
+            
+            document.getElementById('modalAnswer').style.display = 'none';
+            document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
+            document.getElementById('showAnswerBtn').style.display = 'inline-block';
+            if (isHost) {
+                document.getElementById('soundControls').style.display = 'block';
+                updateJokerButtons();
+            } else {
+                document.getElementById('soundControls').style.display = 'none';
+                document.getElementById('jokerControls').style.display = 'none';
+            }
+            document.getElementById('modalOverlay').classList.add('active');
+            
+            applyBoardStateUI();
+            syncToStorage('tick');
+        }
+
+        function updateJokerButtons() {
+            if(!isHost) return;
+            document.getElementById('changeQuestionBtnBlue').style.display = teamJokers.blue > 0 ? 'inline-block' : 'none';
+            document.getElementById('changeQuestionBtnRed').style.display = teamJokers.red > 0 ? 'inline-block' : 'none';
+            document.getElementById('changeQuestionBtnBlue').innerText = `🃏 تغيير أزرق (${teamJokers.blue})`;
+            document.getElementById('changeQuestionBtnRed').innerText = `🃏 تغيير أحمر (${teamJokers.red})`;
+        }
+
+        function changeQuestion(team) {
+            if(isGameOver || !currentSelectedCellId || !isHost) return;
+            if(teamJokers[team] <= 0) {
+                alert('نفذت بطاقات الجوكر لهذا الفريق!');
+                return;
+            }
+            teamJokers[team]--;
+            playTick();
+            const letter = document.getElementById('modalLetter').innerText;
+            
+            fetchQuestionData(letter);
+            
+            document.getElementById('modalAnswer').style.display = 'none';
+            document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
+            document.getElementById('showAnswerBtn').style.display = 'inline-block';
+            
+            updateJokerButtons();
+            syncToStorage('tick');
+        }
+
+        function showAnswer() {
+            if (!isHost) return;
+            document.getElementById('showAnswerBtn').style.display = 'none';
+            document.getElementById('modalAnswer').style.display = 'block';
+        }
+
+        function closeModal() {
+            if (!isHost) return;
+            document.getElementById('modalOverlay').classList.remove('active');
+            currentSelectedCellId = null;
+            applyBoardStateUI();
+            syncToStorage();
+        }
+
+        function assignCell(team) {
+            if (!currentSelectedCellId || isGameOver || !isHost) return;
+
+            const currentState = boardState[currentSelectedCellId];
+            if (currentState === 'blue') scores.blue--;
+            if (currentState === 'red') scores.red--;
+
+            let soundTrigger = null;
+            if (team === 'blue') {
+                boardState[currentSelectedCellId] = 'blue';
+                scores.blue++;
+                playAssign();
+                launchConfetti(['#3b82f6', '#1e3a8a']);
+                launchFlash('blue');
+                soundTrigger = 'confettiBlue';
+                setTimeout(() => { if(!isGameOver && checkWin('blue')) triggerWinCelebration('blue'); }, 400);
+
+            } else if (team === 'red') {
+                boardState[currentSelectedCellId] = 'red';
+                scores.red++;
+                playAssign();
+                launchConfetti(['#ef4444', '#7f1d1d']);
+                launchFlash('red');
+                soundTrigger = 'confettiRed';
+                setTimeout(() => { if(!isGameOver && checkWin('red')) triggerWinCelebration('red'); }, 400);
+
+            } else {
+                boardState[currentSelectedCellId] = null;
+                soundTrigger = 'assign';
+            }
+
+            applyBoardStateUI();
+            updateScoreboard();
+            closeModal();
+            syncToStorage(soundTrigger);
+        }
+
+        function launchConfetti(teamColors) {
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 40, spread: 60, origin: { y: 0.6 }, colors: teamColors, disableForReducedMotion: true, ticks: 150 });
+            }
+        }
+
+        function launchFlash(team) {
+            const overlay = document.getElementById('flashOverlay');
+            if(overlay) {
+                overlay.className = 'flash-overlay flash-' + team;
+                setTimeout(() => { overlay.className = 'flash-overlay'; }, 100);
+            }
+        }
+
+        function updateScoreboard() {
+            document.getElementById('scoreBlue').innerText = scores.blue;
+            document.getElementById('scoreRed').innerText = scores.red;
+            document.getElementById('roundsBlue').innerText = roundsWon.blue;
+            document.getElementById('roundsRed').innerText = roundsWon.red;
+        }
+
+        // الإعداد الافتراضي
+        window.onload = () => {
+            // ننتظر من المستخدم اختيار الدور عبر الشاشة
+        };
+    </script>
+</body>
+</html>

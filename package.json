@@ -1,0 +1,10 @@
+{
+  "name": "7roof-game",
+  "version": "1.0.0",
+  "description": "7ROOF M3 3ZEZ Game Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}
