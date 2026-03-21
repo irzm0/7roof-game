@@ -446,6 +446,7 @@
             <div style="margin-bottom: 1.5rem;">
                 <button class="btn btn-answer" id="showAnswerBtn" onclick="showAnswer()">👁️ إظهار الإجابة</button>
                 <div id="jokerControls" style="display: inline-block; margin-right: 1rem;">
+                    <button class="btn btn-answer" id="changeQuestionBtnHost" onclick="changeQuestionHost()" style="border-color: #a855f7; color: #a855f7; margin-left: 0.5rem; display:none;">🔄 تغيير (المقدم)</button>
                     <button class="btn btn-answer" id="changeQuestionBtnRed" onclick="changeQuestion('red')" style="border-color: #ef4444; color: #ef4444; margin-left: 0.5rem; display:none;">🃏 تغيير (أحمر)</button>
                     <button class="btn btn-answer" id="changeQuestionBtnBlue" onclick="changeQuestion('blue')" style="border-color: #3b82f6; color: #3b82f6; display:none;">🃏 تغيير (أزرق)</button>
                 </div>
@@ -1240,6 +1241,7 @@
 
         function updateJokerButtons() {
             if(!isHost) return;
+            document.getElementById('changeQuestionBtnHost').style.display = 'inline-block';
             document.getElementById('changeQuestionBtnBlue').style.display = teamJokers.blue > 0 ? 'inline-block' : 'none';
             document.getElementById('changeQuestionBtnRed').style.display = teamJokers.red > 0 ? 'inline-block' : 'none';
             document.getElementById('changeQuestionBtnBlue').innerText = `🃏 تغيير أزرق (${teamJokers.blue})`;
@@ -1253,6 +1255,22 @@
                 return;
             }
             teamJokers[team]--;
+            playTick();
+            const letter = document.getElementById('modalLetter').innerText;
+            
+            fetchQuestionData(letter);
+            
+            document.getElementById('modalAnswer').style.display = 'none';
+            document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
+            document.getElementById('showAnswerBtn').style.display = 'inline-block';
+            
+            updateJokerButtons();
+            syncToStorage('tick');
+        }
+
+        function changeQuestionHost() {
+            if(isGameOver || !currentSelectedCellId || !isHost) return;
+            
             playTick();
             const letter = document.getElementById('modalLetter').innerText;
             
