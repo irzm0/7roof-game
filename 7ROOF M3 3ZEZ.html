@@ -292,6 +292,16 @@
         .flash-blue { background-color: rgba(59, 130, 246, 0.3); opacity: 1; }
         .flash-red { background-color: rgba(239, 68, 68, 0.3); opacity: 1; }
 
+        /* وضع تكبير الشاشة للتنسيق مع عرض الخلايا والنقاط فقط */
+        body.fullscreen-mode .settings-btn:not(#fullscreenBtn) { display: none !important; }
+        body.fullscreen-mode .controls { display: none !important; }
+        body.fullscreen-mode .instructions { display: none; }
+        body.fullscreen-mode .header h1 { font-size: 2.5rem; margin-bottom: 0.2rem; }
+        body.fullscreen-mode .scoreboard-wrapper { margin-bottom: 0.5rem; }
+        body.fullscreen-mode .board-container { transform: scale(1.15); margin-top: 3rem; }
+        body.fullscreen-mode #fullscreenBtn { opacity: 0.2; } /* لتخفيف ظهوره أثناء التكبير */
+        body.fullscreen-mode #fullscreenBtn:hover { opacity: 1; }
+
         @media (max-width: 768px) {
             .hex-wrap { width: 60px; height: 69px; }
             .hex-row { margin-top: -16px; }
@@ -386,6 +396,7 @@
 
     <button id="mainSettingsBtn" class="settings-btn" onclick="openSettings()" title="الإعدادات" style="display: none;">⚙️ الإعدادات</button>
     <button id="homeBtn" class="settings-btn" onclick="returnToHome()" title="العودة للرئيسية" style="top: 4.5rem; display: none;">🏠 الرئيسية</button>
+    <button id="fullscreenBtn" class="settings-btn" onclick="toggleFullscreen()" title="تكبير الشاشة للسبورة" style="top: 7.5rem; display: none;">⛶ تكبير</button>
 
     <div class="header">
         <h1 id="mainTitle">حروف مع طلال 🐝</h1>
@@ -806,6 +817,7 @@
                 isHost = false;
                 document.getElementById('mainSettingsBtn').style.display = 'none';
                 document.getElementById('homeBtn').style.display = 'inline-block';
+                document.getElementById('fullscreenBtn').style.display = 'inline-block';
                 document.querySelector('.controls').style.display = 'none';
                 
                 document.getElementById('roundsGoalDisplay').innerText = `بانتظار تلقي الإشارة من المُقدم ⏳...`;
@@ -818,6 +830,7 @@
                 isHost = true;
                 document.getElementById('mainSettingsBtn').style.display = 'inline-block';
                 document.getElementById('homeBtn').style.display = 'inline-block';
+                document.getElementById('fullscreenBtn').style.display = 'inline-block';
                 if (evtSource) { evtSource.close(); evtSource = null; }
                 initRound();
             }
@@ -833,14 +846,41 @@
                 
                 document.getElementById('mainSettingsBtn').style.display = 'none';
                 document.getElementById('homeBtn').style.display = 'none';
+                document.getElementById('fullscreenBtn').style.display = 'none';
                 
                 document.getElementById('roleOverlay').style.display = 'none';
                 document.getElementById('startMenuOverlay').style.display = 'flex';
+                
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(err => { console.log(err); });
+                }
                 
                 if (evtSource) { evtSource.close(); evtSource = null; }
                 isHost = true;
             }
         }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    document.body.classList.add('fullscreen-mode');
+                }).catch(err => {
+                    console.error("Error attempting to enable fullscreen:", err);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().then(() => {
+                        document.body.classList.remove('fullscreen-mode');
+                    });
+                }
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                document.body.classList.remove('fullscreen-mode');
+            }
+        });
 
         function syncToStorage(soundType = null) {
             if (!isHost) return;
