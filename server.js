@@ -25,6 +25,12 @@ const server = http.createServer((req, res) => {
             res.writeHead(200, { 'Content-Type': 'image/png' });
             res.end(data);
         });
+    } else if (req.method === 'GET' && req.url === '/questions.js') {
+        fs.readFile(path.join(__dirname, 'questions.js'), (err, data) => {
+            if (err) { res.writeHead(404); res.end('Not Found'); return; }
+            res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+            res.end(data);
+        });
     } else if (req.method === 'GET' && req.url === '/events') {
         res.writeHead(200, {
             'Content-Type': 'text/event-stream',

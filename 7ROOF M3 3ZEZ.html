@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة حروف مع طلال</title>
+    <title>حروف مع طلال</title>
+    <script src="questions.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
     <!-- مكتبة لعمل حركات الاحتفال -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -1183,7 +1184,7 @@
         };
 
         function fetchQuestionData(letter) {
-            const questions = shortQuestionsDB[letter] || questionsDB[letter];
+            const questions = typeof externalQuestionsDB !== 'undefined' ? (externalQuestionsDB[letter] || questionsDB[letter]) : (shortQuestionsDB[letter] || questionsDB[letter]);
             if (questions && questions.length > 0) {
                 if (!usedQuestions[letter]) usedQuestions[letter] = [];
                 
