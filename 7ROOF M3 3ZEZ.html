@@ -384,7 +384,8 @@
         <button class="role-btn" onclick="selectRole('board')">📺 شاشة المتسابقين (العرض التفاعلي)</button>
     </div>
 
-    <button id="mainSettingsBtn" class="settings-btn" onclick="openSettings()" title="الإعدادات">⚙️ الإعدادات</button>
+    <button id="mainSettingsBtn" class="settings-btn" onclick="openSettings()" title="الإعدادات" style="display: none;">⚙️ الإعدادات</button>
+    <button id="homeBtn" class="settings-btn" onclick="returnToHome()" title="العودة للرئيسية" style="top: 4.5rem; display: none;">🏠 الرئيسية</button>
 
     <div class="header">
         <h1 id="mainTitle">حروف مع طلال 🐝</h1>
@@ -804,6 +805,7 @@
             if (role === 'board') {
                 isHost = false;
                 document.getElementById('mainSettingsBtn').style.display = 'none';
+                document.getElementById('homeBtn').style.display = 'inline-block';
                 document.querySelector('.controls').style.display = 'none';
                 
                 document.getElementById('roundsGoalDisplay').innerText = `بانتظار تلقي الإشارة من المُقدم ⏳...`;
@@ -814,8 +816,29 @@
                 
             } else {
                 isHost = true;
+                document.getElementById('mainSettingsBtn').style.display = 'inline-block';
+                document.getElementById('homeBtn').style.display = 'inline-block';
                 if (evtSource) { evtSource.close(); evtSource = null; }
                 initRound();
+            }
+        }
+
+        function returnToHome() {
+            if(confirm('هل أنت متأكد من العودة للصفحة الرئيسية وتصفير المباراة؟')) {
+                // إغلاق كل المودالات لو كانت مفتوحة
+                document.getElementById('settingsModalOverlay').classList.remove('active');
+                document.getElementById('modalOverlay').classList.remove('active');
+                document.getElementById('winModalOverlay').classList.remove('active');
+                document.getElementById('instructionsOverlay').classList.remove('active');
+                
+                document.getElementById('mainSettingsBtn').style.display = 'none';
+                document.getElementById('homeBtn').style.display = 'none';
+                
+                document.getElementById('roleOverlay').style.display = 'none';
+                document.getElementById('startMenuOverlay').style.display = 'flex';
+                
+                if (evtSource) { evtSource.close(); evtSource = null; }
+                isHost = true;
             }
         }
 
