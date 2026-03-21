@@ -113,6 +113,24 @@
         .hex-wrap.team-red { background: var(--red-glow); transform: scale(1.05); z-index: 5; }
         .hex-wrap.team-red .hex-inner { background: var(--red-bg); color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
 
+        .hex-wrap.flip .hex-inner { transform: scaleX(0); transition: transform 0.15s ease-in; }
+
+        .golden-cell .hex-inner {
+            border: 3px solid #fbbf24;
+            box-shadow: 0 0 15px #fbbf24;
+            animation: goldPulse 2s infinite;
+        }
+        @keyframes goldPulse {
+            0% { transform: scale(1); box-shadow: 0 0 10px #fbbf24; }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px #fbbf24; }
+            100% { transform: scale(1); box-shadow: 0 0 10px #fbbf24; }
+        }
+
+        .team-title { cursor: pointer; transition: all 0.3s ease; }
+        .team-title.active-turn { text-shadow: 0 0 15px currentColor; transform: scale(1.1); }
+        .team-title::after { content: " (دورهم 🎯)"; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; }
+        .team-title.active-turn::after { opacity: 1; }
+
         /* المودال الشفاف */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -421,8 +439,8 @@
         <div id="roundsGoalDisplay" class="rounds-target">الهدف: الفوز في 3 جولات 🏆</div>
         
         <div class="scoreboard">
-            <div class="team-score blue">
-                <div class="team-title" id="titleBlue">🔵 الفريق الأزرق</div>
+            <div class="team-score blue" onclick="if(isHost) forceTurn('blue')">
+                <div class="team-title active-turn" id="titleBlue">🔵 الفريق الأزرق</div>
                 <div class="score-row">
                     <div class="score-item">
                         <div class="score-label">الجولات</div>
@@ -434,7 +452,7 @@
                     </div>
                 </div>
             </div>
-            <div class="team-score red">
+            <div class="team-score red" onclick="if(isHost) forceTurn('red')">
                 <div class="team-title" id="titleRed">🔴 الفريق الأحمر</div>
                 <div class="score-row">
                     <div class="score-item">
@@ -810,6 +828,12 @@
         let roundsGoal = 3;
         let gameTitle = "حروف مع طلال";
         let usedQuestions = {}; 
+        let hostHistory = [];
+        let timerEndAt = null;
+        let timerInterval = null;
+        let lastTickTime = 0;
+        let currentTurn = 'blue';
+        let goldenCells = [];
         
         // Multi-screen Mode
         let isHost = true;
@@ -973,6 +997,8 @@
                 boardState, scores, roundsWon, gameTitle, roundsGoal, lettersLayout, isGameOver, winState, teamNames, teamJokers,
                 activeCellId: currentSelectedCellId,
                 timerEndAt: timerEndAt,
+                currentTurn: currentTurn,
+                goldenCells: goldenCells,
                 timestamp: Date.now(),
                 soundTrigger: soundType ? { type: soundType, time: Date.now() } : null
             };
@@ -1009,6 +1035,10 @@
                 timerEndAt = state.timerEndAt;
                 updateTimerUI(timerEndAt);
             }
+            
+            currentTurn = state.currentTurn || 'blue';
+            goldenCells = state.goldenCells || [];
+            updateTurnUI();
 
             // Redraw board if layout changed or newly initialized
             const board = document.getElementById('board');
@@ -1257,6 +1287,18 @@
             });
         }
 
+        function updateTurnUI() {
+            document.getElementById('titleBlue').classList.toggle('active-turn', currentTurn === 'blue');
+            document.getElementById('titleRed').classList.toggle('active-turn', currentTurn === 'red');
+        }
+
+        function forceTurn(team) {
+            if(!isHost || isGameOver) return;
+            currentTurn = team;
+            updateTurnUI();
+            syncToStorage('tick');
+        }
+
         function applyBoardStateUI() {
             Object.keys(lettersLayout).forEach(cellId => {
                 const cell = document.getElementById(cellId);
@@ -1265,6 +1307,7 @@
                 if (boardState[cellId] === 'blue') cell.classList.add('team-blue');
                 else if (boardState[cellId] === 'red') cell.classList.add('team-red');
                 else if (!isHost && currentSelectedCellId === cellId) cell.classList.add('active-question');
+                else if (goldenCells.includes(cellId) && !boardState[cellId]) cell.classList.add('golden-cell');
             });
         }
 
@@ -1293,6 +1336,13 @@
                     letterIndex++;
                 }
             });
+            
+            // Generate Golden Cells
+            const cellIds = Object.keys(lettersLayout);
+            const shuffledCellIds = shuffleArray(cellIds);
+            goldenCells = shuffledCellIds.slice(0, 2); // 2 golden cells per round
+            currentTurn = 'blue';
+
             drawBoardUI();
             applyBoardStateUI();
             syncToStorage();
@@ -1524,38 +1574,76 @@
         function assignCell(team) {
             if (!currentSelectedCellId || isGameOver || !isHost) return;
 
-            const currentState = boardState[currentSelectedCellId];
-            if (currentState === 'blue') scores.blue--;
-            if (currentState === 'red') scores.red--;
-
+            const cellId = currentSelectedCellId;
             let soundTrigger = null;
-            if (team === 'blue') {
-                boardState[currentSelectedCellId] = 'blue';
-                scores.blue++;
-                playAssign();
-                launchConfetti(['#3b82f6', '#1e3a8a']);
-                launchFlash('blue');
-                soundTrigger = 'confettiBlue';
-                setTimeout(() => { if(!isGameOver && checkWin('blue')) triggerWinCelebration('blue'); }, 400);
 
-            } else if (team === 'red') {
-                boardState[currentSelectedCellId] = 'red';
-                scores.red++;
-                playAssign();
-                launchConfetti(['#ef4444', '#7f1d1d']);
-                launchFlash('red');
-                soundTrigger = 'confettiRed';
-                setTimeout(() => { if(!isGameOver && checkWin('red')) triggerWinCelebration('red'); }, 400);
+            if (team === 'blue' || team === 'red') {
+                const cellElement = document.getElementById(cellId);
+                if(cellElement) cellElement.classList.add('flip');
+                
+                setTimeout(() => {
+                    const currentState = boardState[cellId];
+                    if (currentState === 'blue') scores.blue--;
+                    if (currentState === 'red') scores.red--;
 
+                    boardState[cellId] = team;
+                    scores[team]++;
+                    
+                    // Golden Cell logic
+                    if(goldenCells.includes(cellId)) {
+                        scores[team]++; 
+                        teamJokers[team]++; 
+                        playWinTune(); 
+                        alert(`الخلية الذهبية! 🌟 نقطة وجوكر إضافي للفريق ה${team === 'blue' ? 'أزرق' : 'أحمر'}`);
+                        goldenCells = goldenCells.filter(id => id !== cellId);
+                    }
+
+                    if (team === 'blue') {
+                        playAssign();
+                        launchConfetti(['#3b82f6', '#1e3a8a']);
+                        launchFlash('blue');
+                        soundTrigger = 'confettiBlue';
+                        setTimeout(() => { if(!isGameOver && checkWin('blue')) triggerWinCelebration('blue'); }, 400);
+
+                    } else if (team === 'red') {
+                        playAssign();
+                        launchConfetti(['#ef4444', '#7f1d1d']);
+                        launchFlash('red');
+                        soundTrigger = 'confettiRed';
+                        setTimeout(() => { if(!isGameOver && checkWin('red')) triggerWinCelebration('red'); }, 400);
+                    }
+                    
+                    // Auto-swap turn
+                    currentTurn = (team === 'blue') ? 'red' : 'blue';
+                    updateTurnUI();
+                    
+                    if(cellElement) cellElement.classList.remove('flip');
+                    
+                    applyBoardStateUI();
+                    updateScoreboard();
+                    syncToStorage(soundTrigger);
+                }, 150);
+                
+                // Close modal immediately for smooth presentation
+                stopTimer();
+                document.getElementById('modalOverlay').classList.remove('active');
+                currentSelectedCellId = null;
+                
             } else {
-                boardState[currentSelectedCellId] = null;
+                const currentState = boardState[cellId];
+                if (currentState === 'blue') scores.blue--;
+                if (currentState === 'red') scores.red--;
+                
+                boardState[cellId] = null;
                 soundTrigger = 'assign';
+                
+                stopTimer();
+                document.getElementById('modalOverlay').classList.remove('active');
+                currentSelectedCellId = null;
+                applyBoardStateUI();
+                updateScoreboard();
+                syncToStorage(soundTrigger);
             }
-
-            applyBoardStateUI();
-            updateScoreboard();
-            closeModal();
-            syncToStorage(soundTrigger);
         }
 
         function launchConfetti(teamColors) {
