@@ -31,6 +31,30 @@ const server = http.createServer((req, res) => {
             res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
             res.end(data);
         });
+    } else if (req.method === 'GET' && req.url === '/questions_batch1.js') {
+        fs.readFile(path.join(__dirname, 'questions_batch1.js'), (err, data) => {
+            if (err) { res.writeHead(404); res.end('Not Found'); return; }
+            res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+            res.end(data);
+        });
+    } else if (req.method === 'GET' && req.url === '/questions_batch2.js') {
+        fs.readFile(path.join(__dirname, 'questions_batch2.js'), (err, data) => {
+            if (err) { res.writeHead(404); res.end('Not Found'); return; }
+            res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+            res.end(data);
+        });
+    } else if (req.method === 'GET' && req.url === '/questions_batch3.js') {
+        fs.readFile(path.join(__dirname, 'questions_batch3.js'), (err, data) => {
+            if (err) { res.writeHead(404); res.end('Not Found'); return; }
+            res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+            res.end(data);
+        });
+    } else if (req.method === 'GET' && req.url === '/questions_batch4.js') {
+        fs.readFile(path.join(__dirname, 'questions_batch4.js'), (err, data) => {
+            if (err) { res.writeHead(404); res.end('Not Found'); return; }
+            res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+            res.end(data);
+        });
     } else if (req.method === 'GET' && req.url === '/events') {
         res.writeHead(200, {
             'Content-Type': 'text/event-stream',
