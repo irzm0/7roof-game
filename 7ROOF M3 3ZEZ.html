@@ -151,6 +151,20 @@
         .modal-title { font-size: 1.2rem; margin-bottom: 1.5rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; }
         .modal-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 
+        /* مسار الفوز والكومبو */
+        .win-pulse { z-index: 20 !important; }
+        .win-pulse .hex-inner { animation: winPulseAnim 1.5s infinite alternate; border: 4px solid #fff; box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        .dimmed { opacity: 0.25; filter: grayscale(80%); transition: all 1s ease; pointer-events: none; }
+        @keyframes winPulseAnim {
+            0% { transform: scale(1); filter: brightness(1.2); }
+            100% { transform: scale(1.15); filter: brightness(1.8); }
+        }
+
+        .team-title.on-fire { color: #f97316 !important; text-shadow: 0 0 15px #ef4444, 0 0 30px #f97316; animation: fireShake 0.5s infinite; }
+        .team-title.on-fire::before { content: "🔥 "; }
+        .team-title.on-fire::after { content: " 🔥"; opacity: 1;}
+        @keyframes fireShake { 0% { transform: translate(1px, 1px) } 50% { transform: translate(-1px, -1px) } 100% { transform: translate(1px, -1px) } }
+        
         /* أزرار المودال */
         .btn {
             border: none; padding: 1rem 2rem; font-size: 1.2rem; font-weight: 700; border-radius: 12px;
@@ -834,6 +848,9 @@
         let lastTickTime = 0;
         let currentTurn = 'blue';
         let goldenCells = [];
+        let teamStreaks = { blue: 0, red: 0 };
+        let wildcardCells = [];
+        let currentTimerDuration = 30;
         
         // Multi-screen Mode
         let isHost = true;
@@ -932,7 +949,8 @@
 
         function startTimer() {
             if (!isHost) return;
-            syncToStorage(null, Date.now() + 30000); 
+            const ms = currentTimerDuration * 1000;
+            syncToStorage(null, Date.now() + ms); 
             document.getElementById('startTimerBtn').style.display = 'none';
             document.getElementById('stopTimerBtn').style.display = 'inline-block';
         }
@@ -999,6 +1017,9 @@
                 timerEndAt: timerEndAt,
                 currentTurn: currentTurn,
                 goldenCells: goldenCells,
+                teamStreaks: teamStreaks,
+                wildcardCells: wildcardCells,
+                currentTimerDuration: currentTimerDuration,
                 timestamp: Date.now(),
                 soundTrigger: soundType ? { type: soundType, time: Date.now() } : null
             };
@@ -1038,6 +1059,9 @@
             
             currentTurn = state.currentTurn || 'blue';
             goldenCells = state.goldenCells || [];
+            teamStreaks = state.teamStreaks || { blue: 0, red: 0 };
+            wildcardCells = state.wildcardCells || [];
+            currentTimerDuration = state.currentTimerDuration || 30;
             updateTurnUI();
 
             // Redraw board if layout changed or newly initialized
@@ -1147,7 +1171,7 @@
             });
         }
 
-        // خوارزمية اكتشاف المسار
+        // خوارزمية اكتشاف المسار المضيء
         function checkWin(team) {
             let startNodes = [];
             let isEndNode = (r, c) => false;
@@ -1168,7 +1192,7 @@
             }
 
             let visited = new Set();
-            let queue = [...startNodes];
+            let queue = startNodes.map(n => ({...n, path: [n]}));
 
             while(queue.length > 0) {
                 const curr = queue.shift();
@@ -1180,12 +1204,14 @@
                 if (visited.has(key)) continue;
                 visited.add(key);
 
-                if (isEndNode(curr.r, curr.c)) return true;
+                if (isEndNode(curr.r, curr.c)) return curr.path;
 
                 const neighbors = getNeighbors(curr.r, curr.c);
-                for(let n of neighbors) queue.push(n);
+                for(let n of neighbors) {
+                    queue.push({r: n.r, c: n.c, path: [...curr.path, n]});
+                }
             }
-            return false;
+            return null;
         }
 
         function showWinModal(team, isMatchWin) {
@@ -1232,15 +1258,17 @@
         }
 
         // احتفال الفوز مع إدارة الجولات والمباراة
-        function triggerWinCelebration(team) {
+        function triggerWinCelebration(team, winPath) {
             if (!isHost) return;
             isGameOver = true;
             roundsWon[team]++;
             
             const isMatchWin = roundsWon[team] >= roundsGoal;
-            winState = { team, isMatchWin };
+            const winningCellIds = winPath ? winPath.map(n => `cell-${rowColToIndex(n.r, n.c)}`) : [];
+            winState = { team, isMatchWin, winningCellIds };
             
             updateScoreboard();
+            applyBoardStateUI();
             showWinModal(team, isMatchWin);
             
             playWinTune();
@@ -1290,11 +1318,14 @@
         function updateTurnUI() {
             document.getElementById('titleBlue').classList.toggle('active-turn', currentTurn === 'blue');
             document.getElementById('titleRed').classList.toggle('active-turn', currentTurn === 'red');
+            document.getElementById('titleBlue').classList.toggle('on-fire', teamStreaks.blue >= 3);
+            document.getElementById('titleRed').classList.toggle('on-fire', teamStreaks.red >= 3);
         }
 
         function forceTurn(team) {
             if(!isHost || isGameOver) return;
             currentTurn = team;
+            teamStreaks = { blue: 0, red: 0 }; // إنهاء الكومبو إذا غُيّر الدور يدوياً (كدلالة على الإخفاق)
             updateTurnUI();
             syncToStorage('tick');
         }
@@ -1304,10 +1335,23 @@
                 const cell = document.getElementById(cellId);
                 if (!cell) return;
                 cell.className = 'hex-wrap'; // Reset
-                if (boardState[cellId] === 'blue') cell.classList.add('team-blue');
-                else if (boardState[cellId] === 'red') cell.classList.add('team-red');
-                else if (!isHost && currentSelectedCellId === cellId) cell.classList.add('active-question');
-                else if (goldenCells.includes(cellId) && !boardState[cellId]) cell.classList.add('golden-cell');
+                
+                if (isGameOver && winState && winState.winningCellIds && winState.winningCellIds.length > 0) {
+                    if (winState.winningCellIds.includes(cellId)) {
+                        cell.classList.add('win-pulse');
+                        if (boardState[cellId] === 'blue') cell.classList.add('team-blue');
+                        if (boardState[cellId] === 'red') cell.classList.add('team-red');
+                    } else {
+                        cell.classList.add('dimmed');
+                        if (boardState[cellId] === 'blue') cell.classList.add('team-blue');
+                        else if (boardState[cellId] === 'red') cell.classList.add('team-red');
+                    }
+                } else {
+                    if (boardState[cellId] === 'blue') cell.classList.add('team-blue');
+                    else if (boardState[cellId] === 'red') cell.classList.add('team-red');
+                    else if (!isHost && currentSelectedCellId === cellId) cell.classList.add('active-question');
+                    else if (goldenCells.includes(cellId) && !boardState[cellId]) cell.classList.add('golden-cell');
+                }
             });
         }
 
@@ -1341,6 +1385,12 @@
             const cellIds = Object.keys(lettersLayout);
             const shuffledCellIds = shuffleArray(cellIds);
             goldenCells = shuffledCellIds.slice(0, 2); // 2 golden cells per round
+            
+            // Generate Wildcards
+            const availableForWildcards = shuffledCellIds.filter(id => !goldenCells.includes(id));
+            const randomWildcards = shuffleArray(availableForWildcards);
+            wildcardCells = randomWildcards.slice(0, 3); // 3 wildcard events
+            
             currentTurn = 'blue';
 
             drawBoardUI();
@@ -1463,13 +1513,57 @@
             if(isGameOver || !isHost) return;
             playTick();
             currentSelectedCellId = cellId;
-            document.getElementById('modalLetter').innerText = letter;
             
-            fetchQuestionData(letter);
+            currentTimerDuration = 30;
+            const startTimerBtn = document.getElementById('startTimerBtn');
+            if (startTimerBtn) startTimerBtn.innerText = "▶️ بدء العداد (30ث)";
+
+            if(wildcardCells.includes(cellId)) {
+                const events = [
+                    { title: '🎁 هدية مجانية!', desc: 'مبروك! ستحصلون على هذه الخلية ومحتوياتها مجاناً دون الحاجة للجواب.', type: 'gift' },
+                    { title: '⏱️ تحدي السرعة!', desc: 'أمامكم 10 ثوانٍ فقط بدلاً من 30 للإجابة على هذا السؤال!', type: 'speed' },
+                    { title: '🌪️ العاصفة!', desc: 'أجب بشكل صحيح لتدمير وإفراغ خلية عشوائية يملكها الفريق الخصم!', type: 'storm' }
+                ];
+                const evt = events[Math.floor(Math.random() * events.length)];
+                
+                document.getElementById('modalLetter').innerText = "مفاجأة 🎲";
+                document.getElementById('modalQuestion').innerText = evt.title + "\n" + evt.desc;
+                
+                if (evt.type === 'gift') {
+                    currentLetterAnswer = "(هدية مجانية - لا تحتاج إجابة)";
+                    document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
+                } else if (evt.type === 'speed') {
+                    fetchQuestionData(letter);
+                    currentTimerDuration = 10;
+                    if (startTimerBtn) startTimerBtn.innerText = "▶️ بدء العداد (10ث)";
+                    // Append actual question below the event description
+                    const qData = document.getElementById('modalQuestion').innerText;
+                    setTimeout(() => {
+                        const questionDesc = document.getElementById('modalQuestion').innerHTML; // The standard text fetched by fetchQuestionData
+                        document.getElementById('modalQuestion').innerHTML = `<strong style='color:#fbbf24'>${evt.title}</strong><br><span style='font-size:1.1rem'>${evt.desc}</span><hr style='border-color:rgba(255,255,255,0.1); margin: 15px 0;'>${questionDesc}`;
+                    }, 50); // Little hack to overwrite after fetchQuestionData
+                    document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
+                } else if (evt.type === 'storm') {
+                    fetchQuestionData(letter);
+                    setTimeout(() => {
+                        const questionDesc = document.getElementById('modalQuestion').innerHTML; 
+                        document.getElementById('modalQuestion').innerHTML = `<strong style='color:#ef4444'>${evt.title}</strong><br><span style='font-size:1.1rem'>${evt.desc}</span><hr style='border-color:rgba(255,255,255,0.1); margin: 15px 0;'>${questionDesc}`;
+                    }, 50);
+                    // Mark global variable to know it's a storm
+                    window.pendingStormAction = true;
+                    document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
+                }
+                
+                wildcardCells = wildcardCells.filter(id => id !== cellId); // Remove so it plays once
+            } else {
+                document.getElementById('modalLetter').innerText = letter;
+                fetchQuestionData(letter);
+                document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
+            }
             
             document.getElementById('modalAnswer').style.display = 'none';
-            document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
             document.getElementById('showAnswerBtn').style.display = 'inline-block';
+            
             if (isHost) {
                 document.getElementById('soundControls').style.display = 'block';
                 document.getElementById('hostTimerControls').style.display = 'block';
@@ -1586,15 +1680,24 @@
                     if (currentState === 'blue') scores.blue--;
                     if (currentState === 'red') scores.red--;
 
+                    // Combo & Streaks
+                    teamStreaks[team]++;
+                    const enemy = team === 'blue' ? 'red' : 'blue';
+                    teamStreaks[enemy] = 0;
+                    
+                    const isCombo = teamStreaks[team] >= 3;
+                    const pts = isCombo ? 2 : 1;
+
                     boardState[cellId] = team;
-                    scores[team]++;
+                    scores[team] += pts;
+                    if(isCombo && isHost) alert(`🔥 أداء صاروخي! نقطتان للفريق ה${team === 'blue' ? 'أزرق' : 'أحمر'} لنجاحهم في 3 إجابات الكومبو!`);
                     
                     // Golden Cell logic
                     if(goldenCells.includes(cellId)) {
                         scores[team]++; 
                         teamJokers[team]++; 
                         playWinTune(); 
-                        alert(`الخلية الذهبية! 🌟 نقطة وجوكر إضافي للفريق ה${team === 'blue' ? 'أزرق' : 'أحمر'}`);
+                        alert(`الخلية الذهبية! 🌟 نقطة وجوكر إضافي للفريق ال${team === 'blue' ? 'أزرق' : 'أحمر'}`);
                         goldenCells = goldenCells.filter(id => id !== cellId);
                     }
 
@@ -1603,16 +1706,29 @@
                         launchConfetti(['#3b82f6', '#1e3a8a']);
                         launchFlash('blue');
                         soundTrigger = 'confettiBlue';
-                        setTimeout(() => { if(!isGameOver && checkWin('blue')) triggerWinCelebration('blue'); }, 400);
+                        setTimeout(() => { const p = checkWin('blue'); if(!isGameOver && p) triggerWinCelebration('blue', p); }, 400);
 
                     } else if (team === 'red') {
                         playAssign();
                         launchConfetti(['#ef4444', '#7f1d1d']);
                         launchFlash('red');
                         soundTrigger = 'confettiRed';
-                        setTimeout(() => { if(!isGameOver && checkWin('red')) triggerWinCelebration('red'); }, 400);
+                        setTimeout(() => { const p = checkWin('red'); if(!isGameOver && p) triggerWinCelebration('red', p); }, 400);
                     }
                     
+                    // Storm execution
+                    if (window.pendingStormAction && !isGameOver) {
+                        const enemyTeam = (team === 'blue') ? 'red' : 'blue';
+                        const enemyCells = Object.keys(boardState).filter(id => boardState[id] === enemyTeam);
+                        if (enemyCells.length > 0) {
+                            const randomEnemyCell = enemyCells[Math.floor(Math.random() * enemyCells.length)];
+                            boardState[randomEnemyCell] = null;
+                            scores[enemyTeam]--;
+                            if (isHost) alert(`🌪️ عصفت الرياح! تم تدمير وإفراغ خلية للفريق المُنَافس بنجاح!`);
+                        }
+                    }
+                    window.pendingStormAction = false; // Reset
+
                     // Auto-swap turn
                     currentTurn = (team === 'blue') ? 'red' : 'blue';
                     updateTurnUI();
@@ -1637,6 +1753,8 @@
                 boardState[cellId] = null;
                 soundTrigger = 'assign';
                 
+                window.pendingStormAction = false; // Reset storm if answered incorrectly
+
                 stopTimer();
                 document.getElementById('modalOverlay').classList.remove('active');
                 currentSelectedCellId = null;
