@@ -397,6 +397,16 @@
     <button id="mainSettingsBtn" class="settings-btn" onclick="openSettings()" title="الإعدادات" style="display: none;">⚙️ الإعدادات</button>
     <button id="homeBtn" class="settings-btn" onclick="returnToHome()" title="العودة للرئيسية" style="top: 4.5rem; display: none;">🏠 الرئيسية</button>
     <button id="fullscreenBtn" class="settings-btn" onclick="toggleFullscreen()" title="تكبير الشاشة للسبورة" style="top: 7.5rem; display: none;">⛶ تكبير</button>
+    <button id="historyBtn" class="settings-btn" onclick="openHistory()" title="سجل الأسئلة" style="top: 10.5rem; display: none;">📜 السجل</button>
+
+    <!-- سجل الأسئلة للمقدم -->
+    <div class="modal-overlay" id="historyOverlay">
+        <div class="modal-content" style="max-width: 700px; max-height: 80vh; overflow-y: auto;">
+            <h2 class="modal-letter" style="font-size: 2.5rem; margin-bottom: 1rem;">📜 سجل الأسئلة</h2>
+            <div id="historyList" style="text-align: right; margin-bottom: 2rem; direction: rtl;"></div>
+            <button class="btn btn-blue" onclick="closeHistory()" style="width: 100%; padding: 1rem; font-size: 1.5rem;">إغلاق الشاشة ❌</button>
+        </div>
+    </div>
 
     <div class="header">
         <h1 id="mainTitle">حروف مع طلال 🐝</h1>
@@ -455,10 +465,20 @@
             <h2 class="modal-letter" id="modalLetter">أ</h2>
             <p class="modal-question" id="modalQuestion"></p>
             
+            <div id="timerContainer" style="display:none; font-size: 2.5rem; font-weight: bold; margin: 15px 0; color: #fbbf24;">
+                ⏱️ <span id="timerDisplay">30</span>
+            </div>
+            
+            <div id="hostTimerControls" style="display:none; margin-bottom: 10px;">
+                <button class="btn btn-answer" id="startTimerBtn" onclick="startTimer()" style="background: transparent; border-color: #fbbf24; color: #fbbf24;">▶️ بدء العداد (30ث)</button>
+                <button class="btn btn-answer" id="stopTimerBtn" onclick="stopTimer()" style="background: transparent; border-color: #ef4444; color: #ef4444; display: none;">⏹️ إيقاف العداد</button>
+            </div>
+            
             <div style="margin-bottom: 1.5rem;">
                 <button class="btn btn-answer" id="showAnswerBtn" onclick="showAnswer()">👁️ إظهار الإجابة</button>
                 <div id="jokerControls" style="display: inline-block; margin-right: 1rem;">
                     <button class="btn btn-answer" id="changeQuestionBtnHost" onclick="changeQuestionHost()" style="border-color: #a855f7; color: #a855f7; margin-left: 0.5rem; display:none;">🔄 تغيير (المقدم)</button>
+                    <button class="btn btn-answer" id="stealQuestionBtn" onclick="triggerStealQuestion()" style="border-color: #fca5a5; color: #fca5a5; margin-left: 0.5rem; display:none;">💣 سؤال سطو (صعب)</button>
                     <button class="btn btn-answer" id="changeQuestionBtnRed" onclick="changeQuestion('red')" style="border-color: #ef4444; color: #ef4444; margin-left: 0.5rem; display:none;">🃏 تغيير (أحمر)</button>
                     <button class="btn btn-answer" id="changeQuestionBtnBlue" onclick="changeQuestion('blue')" style="border-color: #3b82f6; color: #3b82f6; display:none;">🃏 تغيير (أزرق)</button>
                 </div>
@@ -818,6 +838,7 @@
                 document.getElementById('mainSettingsBtn').style.display = 'none';
                 document.getElementById('homeBtn').style.display = 'inline-block';
                 document.getElementById('fullscreenBtn').style.display = 'inline-block';
+                document.getElementById('historyBtn').style.display = 'none';
                 document.querySelector('.controls').style.display = 'none';
                 
                 document.getElementById('roundsGoalDisplay').innerText = `بانتظار تلقي الإشارة من المُقدم ⏳...`;
@@ -831,6 +852,7 @@
                 document.getElementById('mainSettingsBtn').style.display = 'inline-block';
                 document.getElementById('homeBtn').style.display = 'inline-block';
                 document.getElementById('fullscreenBtn').style.display = 'inline-block';
+                document.getElementById('historyBtn').style.display = 'inline-block';
                 if (evtSource) { evtSource.close(); evtSource = null; }
                 initRound();
             }
@@ -843,10 +865,12 @@
                 document.getElementById('modalOverlay').classList.remove('active');
                 document.getElementById('winModalOverlay').classList.remove('active');
                 document.getElementById('instructionsOverlay').classList.remove('active');
+                document.getElementById('historyOverlay').classList.remove('active');
                 
                 document.getElementById('mainSettingsBtn').style.display = 'none';
                 document.getElementById('homeBtn').style.display = 'none';
                 document.getElementById('fullscreenBtn').style.display = 'none';
+                document.getElementById('historyBtn').style.display = 'none';
                 
                 document.getElementById('roleOverlay').style.display = 'none';
                 document.getElementById('startMenuOverlay').style.display = 'flex';
@@ -882,11 +906,73 @@
             }
         });
 
-        function syncToStorage(soundType = null) {
+        function startTimer() {
             if (!isHost) return;
+            syncToStorage(null, Date.now() + 30000); 
+            document.getElementById('startTimerBtn').style.display = 'none';
+            document.getElementById('stopTimerBtn').style.display = 'inline-block';
+        }
+
+        function stopTimer() {
+            if (!isHost) return;
+            syncToStorage(null, null); 
+            document.getElementById('startTimerBtn').style.display = 'inline-block';
+            document.getElementById('stopTimerBtn').style.display = 'none';
+        }
+        
+        function updateTimerUI(endAt) {
+            clearInterval(timerInterval);
+            if (!endAt) {
+                document.getElementById('timerContainer').style.display = 'none';
+                if (isHost) {
+                    document.getElementById('startTimerBtn').style.display = 'inline-block';
+                    document.getElementById('stopTimerBtn').style.display = 'none';
+                }
+                return;
+            }
+
+            document.getElementById('timerContainer').style.display = 'block';
+            if (isHost) {
+                document.getElementById('startTimerBtn').style.display = 'none';
+                document.getElementById('stopTimerBtn').style.display = 'inline-block';
+            }
+
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                let remaining = Math.ceil((endAt - now) / 1000);
+                
+                if (remaining <= 0) {
+                    remaining = 0;
+                    clearInterval(timerInterval);
+                    document.getElementById('timerDisplay').innerText = remaining;
+                    document.getElementById('timerDisplay').style.color = '#ef4444';
+                    if (isHost) playHostSound('wrong'); 
+                    return;
+                }
+                
+                document.getElementById('timerDisplay').innerText = remaining;
+                
+                if (remaining <= 10) {
+                    document.getElementById('timerDisplay').style.color = '#ef4444';
+                    if (now - lastTickTime > 950) {
+                        playTick();
+                        lastTickTime = now;
+                    }
+                } else {
+                    document.getElementById('timerDisplay').style.color = '#fbbf24';
+                }
+            }, 100);
+        }
+
+        function syncToStorage(soundType = null, newTimerEndAt = undefined) {
+            if (!isHost) return;
+            if (newTimerEndAt !== undefined) {
+                timerEndAt = newTimerEndAt;
+            }
             const state = {
                 boardState, scores, roundsWon, gameTitle, roundsGoal, lettersLayout, isGameOver, winState, teamNames, teamJokers,
                 activeCellId: currentSelectedCellId,
+                timerEndAt: timerEndAt,
                 timestamp: Date.now(),
                 soundTrigger: soundType ? { type: soundType, time: Date.now() } : null
             };
@@ -918,6 +1004,11 @@
             currentSelectedCellId = state.activeCellId;
             isGameOver = state.isGameOver;
             winState = state.winState;
+
+            if (state.timerEndAt !== timerEndAt) {
+                timerEndAt = state.timerEndAt;
+                updateTimerUI(timerEndAt);
+            }
 
             // Redraw board if layout changed or newly initialized
             const board = document.getElementById('board');
@@ -1185,6 +1276,7 @@
             lettersLayout = {};
             scores = { blue: 0, red: 0 };
             teamJokers = { blue: 1, red: 1 };
+            hostHistory = []; // تصفير السجل مع بداية اللوحة الجديدة
             isGameOver = false;
             winState = null;
             currentSelectedCellId = null;
@@ -1251,6 +1343,19 @@
             '★': [{q:"لاعب تنس صربي صاحب الرقم القياسي لألقاب الجراند سلام؟", a:"دجوكوفيتش"},{q:"منتخب عربي أسطوري أطاح بالكبار ووصل لنصف نهائي مونديـال قطر؟", a:"المغرب"}]
         };
 
+        const hardQuestionsDB = [
+            {q:"ما هو أعمق خندق محيطي في العالم وما اسمه؟", a:"خندق ماريانا"},
+            {q:"ما هو اسم أول قمر صناعي أطلقه الإنسان للفضاء؟", a:"سبوتنيك 1"},
+            {q:"أي فيلسوف إغريقي شرب السم (الشوكران) حُكماً بالإعدام؟", a:"سقراط"},
+            {q:"ما هي أكثر دولة في العالم تضم بحيرات طبيعية؟", a:"كندا"},
+            {q:"كم عدد الخلايا العصبية في الدماغ البشري تقريباً؟", a:"حوالي 86 مليار خلية"},
+            {q:"من القائد المسلم الذي انتصر في معركة التتار بمعركة عين جالوت؟", a:"قطز"},
+            {q:"ما هي الغدة المسؤولة عن تنظيم السكر في الدم؟", a:"البنكرياس"},
+            {q:"ما هو أثقل عنصر متواجد في الطبيعة كيميائياً؟", a:"اليورانيوم"},
+            {q:"كم كانت مدة أقصر حرب في التاريخ (بين بريطانيا وزنجبار)؟", a:"38 دقيقة"},
+            {q:"متى تأسست الدولة السعودية الأولى بالعام الهجري تقريباً؟", a:"1139 هـ"}
+        ];
+
         function fetchQuestionData(letter) {
             const questions = typeof externalQuestionsDB !== 'undefined' ? (externalQuestionsDB[letter] || questionsDB[letter]) : (shortQuestionsDB[letter] || questionsDB[letter]);
             if (questions && questions.length > 0) {
@@ -1272,10 +1377,36 @@
                 const randomQ = questions[randomChoice];
                 document.getElementById('modalQuestion').innerText = randomQ.q;
                 currentLetterAnswer = randomQ.a;
+                
+                // حفظ السؤال للسجل
+                if (isHost) hostHistory.unshift({ letter: letter, q: randomQ.q, a: randomQ.a });
+                
             } else {
                 document.getElementById('modalQuestion').innerText = "لا يوجد سؤال مسجل.";
                 currentLetterAnswer = "-";
             }
+        }
+        
+        function openHistory() {
+            if (!isHost) return;
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            if (hostHistory.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#9ca3af; font-size:1.2rem;">لا يوجد أسئلة في السجل حتى الآن.</p>';
+            } else {
+                hostHistory.forEach((item, index) => {
+                    list.innerHTML += `<div style="background:#1f2937; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #374151;">
+                        <strong style="color:#fbbf24; font-size:1.2rem;">${hostHistory.length - index}. الحرف (${item.letter})</strong><br>
+                        <span style="color:#f3f4f6;">السؤال:</span> ${item.q}<br>
+                        <span style="color:#10b981;">الإجابة:</span> ${item.a}
+                    </div>`;
+                });
+            }
+            document.getElementById('historyOverlay').classList.add('active');
+        }
+
+        function closeHistory() {
+            document.getElementById('historyOverlay').classList.remove('active');
         }
 
         function openModal(cellId, letter) {
@@ -1291,9 +1422,12 @@
             document.getElementById('showAnswerBtn').style.display = 'inline-block';
             if (isHost) {
                 document.getElementById('soundControls').style.display = 'block';
+                document.getElementById('hostTimerControls').style.display = 'block';
+                stopTimer(); // Ensure timer is reset on new question
                 updateJokerButtons();
             } else {
                 document.getElementById('soundControls').style.display = 'none';
+                document.getElementById('hostTimerControls').style.display = 'none';
                 document.getElementById('jokerControls').style.display = 'none';
             }
             document.getElementById('modalOverlay').classList.add('active');
@@ -1305,6 +1439,7 @@
         function updateJokerButtons() {
             if(!isHost) return;
             document.getElementById('changeQuestionBtnHost').style.display = 'inline-block';
+            document.getElementById('stealQuestionBtn').style.display = 'inline-block';
             document.getElementById('changeQuestionBtnBlue').style.display = teamJokers.blue > 0 ? 'inline-block' : 'none';
             document.getElementById('changeQuestionBtnRed').style.display = teamJokers.red > 0 ? 'inline-block' : 'none';
             document.getElementById('changeQuestionBtnBlue').innerText = `🃏 تغيير أزرق (${teamJokers.blue})`;
@@ -1327,6 +1462,7 @@
             document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
             document.getElementById('showAnswerBtn').style.display = 'inline-block';
             
+            stopTimer(); // Ensure timer resets if host changes question
             updateJokerButtons();
             syncToStorage('tick');
         }
@@ -1343,6 +1479,29 @@
             document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
             document.getElementById('showAnswerBtn').style.display = 'inline-block';
             
+            stopTimer(); // Ensure timer resets if host changes question
+            updateJokerButtons();
+            syncToStorage('tick');
+        }
+
+        function triggerStealQuestion() {
+            if(isGameOver || !currentSelectedCellId || !isHost) return;
+            playTick();
+            
+            const randomChoice = Math.floor(Math.random() * hardQuestionsDB.length);
+            const randomQ = hardQuestionsDB[randomChoice];
+            
+            document.getElementById('modalQuestion').innerHTML = "<strong style='color:#fca5a5;'>🔥 [سؤال سطو / صعب جداً] 🔥</strong><br><br>" + randomQ.q;
+            currentLetterAnswer = randomQ.a;
+            
+            // حفظ السطو للسجل
+            hostHistory.unshift({ letter: "سطو 💣", q: randomQ.q, a: randomQ.a });
+            
+            document.getElementById('modalAnswer').style.display = 'none';
+            document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
+            document.getElementById('showAnswerBtn').style.display = 'inline-block';
+            
+            stopTimer();
             updateJokerButtons();
             syncToStorage('tick');
         }
@@ -1355,6 +1514,7 @@
 
         function closeModal() {
             if (!isHost) return;
+            stopTimer();
             document.getElementById('modalOverlay').classList.remove('active');
             currentSelectedCellId = null;
             applyBoardStateUI();
