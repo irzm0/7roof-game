@@ -407,15 +407,25 @@
 
     <!-- نافذة شرح اللعب (تعليمات) -->
     <div class="modal-overlay" id="instructionsOverlay">
-        <div class="modal-content" style="max-width: 600px;">
-            <h2 class="modal-letter" style="font-size: 3rem; margin-bottom: 2rem;">📖 طريقة اللعب</h2>
-            <ul class="instructions-list">
-                <li>🔵 <span style="font-weight: bold; color: #60a5fa;">الفريق الأزرق:</span> هدفه التوصيل عمودياً.</li>
-                <li>🔴 <span style="font-weight: bold; color: #f87171;">الفريق الأحمر:</span> هدفه التوصيل أفقياً.</li>
-                <li>🃏 <span style="font-weight: bold; color: #fbbf24;">المساعدات:</span> لكل فريق حق تغيير سؤال واحد.</li>
-                <li>🏆 <span style="font-weight: bold; color: #10b981;">الفوز:</span> يحصل الفريق الذي يبني مساراً متصلاً على الجولة.</li>
+        <div class="modal-content" style="max-width: 750px; max-height: 85vh; overflow-y: auto;">
+            <h2 class="modal-letter" style="font-size: 3rem; margin-bottom: 1.5rem;">📖 الميزات وطريقة اللعب</h2>
+            <ul class="instructions-list" style="font-size: 1.15rem; line-height: 1.7;">
+                <li>🔵 <span style="font-weight: bold; color: #60a5fa;">الفريق الأزرق:</span> هدفه التوصيل عمودياً. (🔴 <span style="font-weight: bold; color: #f87171;">الفريق الأحمر:</span> هدفه أفقياً).</li>
+                <li>🏆 <span style="font-weight: bold; color: #10b981;">الفوز وتوهج المسار:</span> يحصل الفريق الذي يبني مساراً متصلاً على الجولة، وسيضيء مساره المنتصر على الشاشة!</li>
+                <hr style="border-color:rgba(255,255,255,0.1); margin: 15px 0;">
+                <li>⏱️ <span style="font-weight: bold; color: #fbbf24;">المؤقت الزمني:</span> كل فريق يملك 30 ثانية للإجابة، ولحظات توتر في آخر 10 ثوانٍ.</li>
+                <li>💣 <span style="font-weight: bold; color: #fca5a5;">سؤال السطو:</span> يتيح للمقدم طرح سؤال خارجي صعب كسرقة لفرصة الخصم.</li>
+                <li>🔥 <span style="font-weight: bold; color: #f97316;">الاشتعال (الكومبو):</span> 3 إجابات صحيحة متتالية ستشعل حماس الفريق وتضاعف نقاط الخلية إلى (نقطتين).</li>
+                <li>🌟 <span style="font-weight: bold; color: #fbbf24;">الخلايا الذهبية:</span> كنز مخفي! الفوز بها يمنحك نقطة إضافية وبطاقة جوكر لتغيير الأسئلة.</li>
+                <li>🎲 <span style="font-weight: bold; color: #a855f7;">صناديق المفاجآت:</span> بعض الأحرف تخبئ أحداثاً غير متوقعة:
+                    <ul style="margin-right: 20px; font-size: 1rem; color: #cbd5e1; list-style-type: square; margin-bottom: 10px;">
+                        <li>🎁 <strong>الهدية:</strong> تحصل على الخلية مجاناً.</li>
+                        <li>⏱️ <strong>تحدي السرعة:</strong> أمامك 10 ثوانٍ فقط بدلاً من 30!</li>
+                        <li>🌪️ <strong>العاصفة:</strong> أجب صح لتدمر وتفرغ خلية عشوائية كان يمتلكها الخصم!</li>
+                    </ul>
+                </li>
             </ul>
-            <button class="btn btn-blue" onclick="closeInstructions()" style="width: 100%; padding: 1rem; font-size: 1.5rem;">جاهز للعب! 👍</button>
+            <button class="btn btn-blue" onclick="closeInstructions()" style="width: 100%; padding: 1rem; font-size: 1.5rem; margin-top: 1rem;">جاهز للعب! 👍</button>
         </div>
     </div>
 
