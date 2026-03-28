@@ -598,6 +598,7 @@
         <div class="modal-content" style="position: relative;">
             <div id="categoryHint" style="display: none; font-size: 3.5rem; color: #fbbf24; padding: 4rem 1rem; text-shadow: 0 0 20px rgba(251, 191, 36, 0.4); font-weight: 800; animation: pulse 1s infinite alternate;">⏳ كشف الفئة...</div>
             <h2 class="modal-letter" id="modalLetter">أ</h2>
+            <div id="modalMediaContainer" style="display:none; margin-bottom: 15px; width: 100%;"></div>
             <p class="modal-question" id="modalQuestion" style="display: none;"></p>
             
             <div id="timerContainer" style="display:none; font-size: 2.5rem; font-weight: bold; margin: 15px 0; color: #fbbf24;">
@@ -814,7 +815,7 @@
                 {q:"المسلسل الرمضاني والكوميدي السعودي الأيقوني والتاريخي الذي تم إنشاؤه من بطولة العمالقة ناصر القصبي وعبدالله السدحان الكوميدية؟", a:"طاش ما طاش (إجابة تبدأ بطاء) // بديل لدال: ممثل أمريكي عظيم وبطل تايتانيك والذي انتظر الأوسكار طويلاً حتى ناله عن فيلم העائد أخيراً؟ .. دي كابريو (ليوناردو دي كابريو)"},
                 {q:"نادي كرة قدم ألماني يشتهر بملعبه الملون بالأسود والأصفر الجميل (سيغنال إيدونا بارك) و جمهوره المتحمس الجدار الأصفر؟", a:"دورتموند (بوروسيا دورتموند)"},
                 {q:"صانع ألعاب بلجيكي عبقري ومهندس خط وسط مانشستر سيتي الأول ذو الشعر الأشقر والتمريرات الحاسمة التي لا تقرأ؟", a:"دي بروين (كيفين دي بروين)"},
-                {q:"كائنات عملاقة ومنقرضة شرسة سادت الأرض قبل ملايين السنين بقوة وجبروت وجسدت موضوعاً رائعاً لفيلم الحديقة الجوراسية المخيف؟", a:"ديناصورات (ديناصور)"},
+                {q:"كائنات عملاقة ومنقرضة شرسة سادت الأرض قبل ملايين السنين بقوة وجبروت وجسدت موضوعاً رائعاً لفيلم الحديقة الجوراسية المخيف؟", a:"ديناصورات (ديناصور)", audio: "https://actions.google.com/sounds/v1/animals/dinosaur_roar.ogg"},
                 {q:"سلسلة أنمي شهيرة تتحدث عن كرات سبع قادرة على استدعاء تنين وتحقيق الأمنيات للمقاتل غوكو وأصدقائه؟", a:"دراغون بول (Dragon Ball)"},
                 {q:"أنمي يتحدث عن مذكرة موت تسقط من الشينيغامي ريوك ليأخذها ياغامي لايت ويحاول تطهير العالم من المجرمين؟", a:"ديث نوت (Death Note)"}
             ],
@@ -907,7 +908,7 @@
             'م': [
                 {q:"أعرق وأكبر أندية إنجلترا المتوجة كروياً يرتدي اللون الأحمر الناري والتاريخي، ومقره ومعقله ملعب العريق (أولد ترافورد) الملقب جماهيرياً في الإعلام بمسرح الأحلام ودربه السير فيرغسون الأعظم؟", a:"مانشستر يونايتد (الشياطين الحمر مانشستر)"},
                 {q:"سلسلة أكشن وفلسفة ومؤثرات خيال علمي وثورية بصرية مبهرة جداً للممثل المذهل كيانو ريفز (مستر أندرسون / نيو) تدور أحداثها المحورية المعقدة حول مصفوفة عالم رقمي الوهم والتمرد على الآلات والهروب لمعرفة الحقيقة المروعة؟", a:"ماتريكس (The Matrix المصفوفة)"},
-                {q:"دولة عربية كبرى ومحورية تقع استراتيجياً وسياسياً شمال قارة أفريقيا ويمر بقوة في عروقها شريان ومورد نهر النيل العظيم العابر وفي مناطق صحاريها الجيزة تتخذ مسكناً أبدياً لأهرامات الفرعون الضخمة الخالدة العظيمة، تلقب ب(أم الدنيا)؟", a:"مصر (جمهورية مصر العربية)"}
+                {q:"دولة عربية كبرى ومحورية تقع استراتيجياً وسياسياً شمال قارة أفريقيا ويمر بقوة في عروقها شريان ومورد نهر النيل العظيم العابر وفي مناطق صحاريها الجيزة تتخذ مسكناً أبدياً لأهرامات الفرعون الضخمة الخالدة العظيمة، تلقب ب(أم الدنيا)؟", a:"مصر (جمهورية مصر العربية)", img: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Kheops-Pyramid.jpg"}
             ],
             'ن': [
                 {q:"لاعب برازيلي دولي ساحر وممتع جداً في اختراعاته الكروية، لعب لبرشلونة الـ  MSNوباريس وسان جيرمان الفرنسي وانتقل لاحقاً بصفقة مدوية للقيادة الهجومية كقائد كابتن لدوري روشن السعودي نادي الهلال تحديداً بعد إصابات متعددة؟", a:"نيمار داسيلفا (نيمار)"},
@@ -1166,6 +1167,7 @@
             if (newTimerEndAt !== undefined) {
                 timerEndAt = newTimerEndAt;
             }
+            
             const state = {
                 boardState, scores, roundsWon, gameTitle, roundsGoal, lettersLayout, isGameOver, winState, teamNames, teamJokers,
                 activeCellId: currentSelectedCellId,
@@ -1634,6 +1636,22 @@
                 usedQuestions[letter].push(randomChoice); 
                 
                 const randomQ = questions[randomChoice];
+                
+                // تحديث وتهيئة مكونات الوسائط
+                const mediaContainer = document.getElementById('modalMediaContainer');
+                mediaContainer.innerHTML = '';
+                mediaContainer.style.display = 'none';
+
+                if (randomQ.img || randomQ.audio) {
+                    if (randomQ.img) {
+                        mediaContainer.innerHTML += `<img src="${randomQ.img}" style="max-width: 100%; max-height: 250px; border-radius: 12px; border: 2px solid #fbbf24; margin-bottom: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">`;
+                    }
+                    if (randomQ.audio) {
+                        mediaContainer.innerHTML += `<audio controls style="width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);"><source src="${randomQ.audio}"></audio>`;
+                    }
+                    mediaContainer.style.display = 'block';
+                }
+
                 document.getElementById('modalQuestion').innerHTML = randomQ.q;
                 currentLetterAnswer = randomQ.a;
                 currentLetterCategory = randomQ.c || categoriesOptions[Math.floor(Math.random() * categoriesOptions.length)];
@@ -1642,6 +1660,7 @@
                 if (isHost) hostHistory.unshift({ letter: letter, q: randomQ.q, a: randomQ.a });
                 
             } else {
+                document.getElementById('modalMediaContainer').style.display = 'none';
                 document.getElementById('modalQuestion').innerHTML = "لا يوجد سؤال مسجل.";
                 currentLetterAnswer = "-";
                 currentLetterCategory = "عشوائي ❓";
