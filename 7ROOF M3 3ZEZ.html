@@ -64,24 +64,30 @@
         .instructions span.red { color: #ef4444; font-weight: bold; }
         .instructions span.blue { color: #3b82f6; font-weight: bold; }
 
-        /* لوحة النقاط المُحدّثة */
-        .scoreboard-wrapper { width: 100%; max-width: 800px; padding: 0 1rem; display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem; animation: fadeIn 1s ease-out;}
-        .rounds-target { color: #fbbf24; font-size: 1.4rem; font-weight: bold; margin-bottom: 1.5rem; background: rgba(251, 191, 36, 0.1); padding: 0.5rem 1.5rem; border-radius: 20px; border: 1px dashed rgba(251, 191, 36, 0.4); text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        .scoreboard { display: flex; gap: 2rem; width: 100%; justify-content: center; }
+        /* لوحة النقاط والتخطيط الجديد المزدوج */
+        .game-layout { display: flex; flex-direction: row; width: 100%; max-width: 1500px; gap: 4rem; align-items: stretch; justify-content: space-between; margin-top: 1rem; animation: fadeIn 1s ease-out; }
+        .scoreboard-side { flex: 1; display: flex; flex-direction: column; gap: 1.5rem; width: 100%; max-width: 500px; justify-content: center;}
+        .board-side { flex: 1.8; display: flex; justify-content: center; align-items: center;}
+        
+        .scoreboard-wrapper { width: 100%; display: flex; flex-direction: column; align-items: stretch; animation: fadeIn 1.2s ease-out; }
+        .rounds-target { color: #fbbf24; font-size: 1.8rem; font-weight: bold; margin-bottom: 2rem; background: rgba(0,0,0, 0.4); padding: 1rem 2rem; border-radius: 24px; border: 2px solid rgba(251, 191, 36, 0.4); text-shadow: 0 4px 10px rgba(0,0,0,0.5); text-align: center; }
+        .scoreboard { display: flex; flex-direction: column; gap: 2rem; width: 100%; }
         
         .team-score {
             background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);
-            padding: 1rem; border-radius: 16px; font-weight: 800;
-            display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: 45%; 
-            border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            padding: 2.5rem 2rem; border-radius: 24px; font-weight: 800;
+            display: flex; flex-direction: column; align-items: center; gap: 1.5rem; width: 100%; 
+            border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease;
         }
-        .team-title { font-size: 1.3rem; margin-bottom: 0.5rem; }
-        .team-score.blue { border-bottom: 4px solid var(--blue-glow); }
-        .team-score.red { border-bottom: 4px solid var(--red-glow); }
-        .score-row { display: flex; justify-content: center; gap: 1.5rem; width: 100%; }
+        .team-score:hover { transform: translateY(-5px); }
+        .team-title { font-size: 2.3rem; margin-bottom: 0.5rem; }
+        .team-score.blue { border-bottom: 5px solid var(--blue-glow); }
+        .team-score.red { border-bottom: 5px solid var(--red-glow); }
+        .score-row { display: flex; justify-content: center; gap: 2rem; width: 100%; }
         .score-item { text-align: center; }
-        .score-label { color: #cbd5e1; font-size: 1rem; margin-bottom: 0.3rem; }
-        .score-val { background: rgba(0,0,0,0.3); padding: 0.2rem 1rem; border-radius: 12px; font-size: 1.6rem; color: #fff; }
+        .score-label { color: #cbd5e1; font-size: 1.4rem; margin-bottom: 0.5rem; }
+        .score-val { background: rgba(0,0,0,0.4); padding: 0.8rem 2.2rem; border-radius: 16px; font-size: 3rem; color: #fff; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
 
         /* لوحة العسل المتداخلة */
         .board-container {
@@ -334,15 +340,25 @@
         .flash-blue { background-color: rgba(59, 130, 246, 0.3); opacity: 1; }
         .flash-red { background-color: rgba(239, 68, 68, 0.3); opacity: 1; }
 
-        /* وضع تكبير الشاشة للتنسيق مع عرض الخلايا والنقاط فقط */
+        /* وضع تكبير الشاشة (شاشة العرض للمتسابقين المتطورة) */
         body.fullscreen-mode .settings-btn:not(#fullscreenBtn) { display: none !important; }
-        body.fullscreen-mode .controls { display: none !important; }
         body.fullscreen-mode .instructions { display: none; }
-        body.fullscreen-mode .header h1 { font-size: 2.5rem; margin-bottom: 0.2rem; }
-        body.fullscreen-mode .scoreboard-wrapper { margin-bottom: 0.5rem; }
-        body.fullscreen-mode .board-container { transform: scale(1.15); margin-top: 3rem; }
-        body.fullscreen-mode #fullscreenBtn { opacity: 0.2; } /* لتخفيف ظهوره أثناء التكبير */
+        body.fullscreen-mode .header { display: none; } 
+        body.fullscreen-mode .game-layout { transform: scale(1.05); gap: 6rem; height: 90vh; }
+        body.fullscreen-mode .board-container { border: 3px solid rgba(255,255,255,0.08); box-shadow: 0 0 120px rgba(0,0,0,0.9); padding: 5rem; background: rgba(0,0,0,0.3); }
+        body.fullscreen-mode .hex-wrap { width: 145px; height: 167px; margin: 0 8px; }
+        body.fullscreen-mode .hex-inner { font-size: 4.5rem; }
+        body.fullscreen-mode .hex-row { margin-top: -39px; }
+        body.fullscreen-mode .team-score { padding: 3rem 2rem; }
+        body.fullscreen-mode .team-title { font-size: 3rem; }
+        body.fullscreen-mode #fullscreenBtn { opacity: 0.1; }
         body.fullscreen-mode #fullscreenBtn:hover { opacity: 1; }
+        
+        @media (max-width: 1024px) {
+            .game-layout { flex-direction: column; gap: 2rem; justify-content: center; }
+            .board-side { justify-content: center; width: 100%; }
+            .scoreboard { flex-direction: row; }
+        }
 
         @media (max-width: 768px) {
             .hex-wrap { width: 60px; height: 69px; }
@@ -411,7 +427,8 @@
             <div class="start-buttons-wrapper">
                 <button class="btn-premium btn-play" onclick="showRoleSelection()">بدء المواجهة ▶️</button>
                 <button class="btn-premium btn-how" onclick="showInstructions()">كيف تلعب؟ 📖</button>
-                <button class="btn-premium btn-supporters" onclick="showSupporters()">الداعمين 💎</button>
+                <button class="btn-premium btn-supporters" onclick="showSupporters()">الداعم 💎</button>
+                <button class="btn-premium" onclick="showLeaderboard()" style="background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.2); color: #fbbf24;">لوحة الشرف 🏆</button>
             </div>
         </div>
     </div>
@@ -440,18 +457,53 @@
         </div>
     </div>
 
-    <!-- نافذة الداعمين -->
-    <div class="modal-overlay" id="supportersOverlay">
+    <!-- نافذة لوحة الشرف -->
+    <div class="modal-overlay" id="leaderboardOverlay">
         <div class="modal-content" style="max-width: 600px; max-height: 85vh; overflow-y: auto;">
-            <h2 class="modal-letter" style="font-size: 3rem; margin-bottom: 1.5rem; color: #10b981; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);">💎 الداعمين</h2>
-            <p style="color: #cbd5e1; font-size: 1.3rem; margin-bottom: 2rem; line-height: 1.6;">
-                شكراً لكل من ساهم ودعم هذا المشروع ليخرج بأفضل صورة:
-            </p>
-            <ul class="instructions-list" style="text-align: right; color: #f8fafc; font-size: 1.4rem; list-style: none; padding-right: 0;">
-                <li style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; border-right: 4px solid #10b981;">👑 الداعم الأول هنا</li>
-                <li style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; border-right: 4px solid #3b82f6;">⭐ الداعم الثاني هنا</li>
-            </ul>
-            <button class="btn" style="background: #10b981; width: 100%; padding: 1rem; font-size: 1.5rem; margin-top: 1rem;" onclick="closeSupporters()">إغلاق الشاشة ❌</button>
+            <h2 class="modal-letter" style="font-size: 3rem; margin-bottom: 1.5rem; color: #fbbf24; text-shadow: 0 0 20px rgba(251, 191, 36, 0.4);">🏆 سجل أبطال حروف</h2>
+            <div id="leaderboardList" style="text-align: right; color: #f8fafc; font-size: 1.5rem; line-height: 2;">
+                <!-- سيتم ملؤه بواسطة JavaScript -->
+            </div>
+            <button class="btn btn-red" onclick="clearLeaderboard()" style="margin-top: 2rem; width: 100%; font-size: 1.2rem;">🗑️ مسح السجل التاريخي</button>
+            <button class="btn" style="background: rgba(255,255,255,0.1); color: #f8fafc; width: 100%; padding: 1rem; font-size: 1.5rem; margin-top: 1rem; border: 1px solid rgba(255,255,255,0.2);" onclick="closeLeaderboard()">إغلاق اللوحة ❌</button>
+        </div>
+    </div>
+
+    <!-- نافذة الداعم الخنفشاري -->
+    <div class="modal-overlay" id="supportersOverlay">
+        <div class="modal-content" style="max-width: 600px; max-height: 85vh; overflow-y: auto; text-align: center;">
+            <h2 class="modal-letter" style="font-size: 3.2rem; margin-bottom: 2rem; color: #10b981; text-shadow: 0 0 25px rgba(16, 185, 129, 0.5);">💎 الراعي الخنفشاري 💎</h2>
+            
+            <div style="background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), url('blur_bg.jpg'); background-size: cover; background-position: center; border: 2px solid #10b981; border-radius: 24px; padding: 2.5rem 1.5rem; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(16, 185, 129, 0.1);">
+                <!-- تأثير الإضاءة الخلفي -->
+                <div style="position: absolute; top: -50px; left: 50%; width: 250px; height: 250px; background: rgba(16, 185, 129, 0.25); filter: blur(60px); transform: translateX(-50%); border-radius: 50%; pointer-events: none;"></div>
+                
+                <!-- صورة الداعم -->
+                <div style="position: relative; width: 160px; height: 160px; margin: 0 auto 1.5rem auto;">
+                    <!-- يمكنك حفظ صورة بلور بجانب ملف اللعبة باسم blur.jpg أو وضع الرابط المباشر هنا -->
+                    <img id="supporterImg" src="blur.jpg" alt="صورة الداعم بلور" onerror="this.src='https://via.placeholder.com/160/1e293b/10b981?text=Blur'" style="width: 100%; height: 100%; border-radius: 50%; border: 4px solid #10b981; object-fit: cover; box-shadow: 0 10px 25px rgba(0,0,0,0.6); position: relative; z-index: 2;">
+                </div>
+                
+                <!-- اسم الداعم -->
+                <h3 id="supporterName" style="font-size: 2.6rem; font-weight: 800; color: #fff; margin-bottom: 0.2rem; letter-spacing: 1px; position: relative; z-index: 2;">بلور / blur</h3>
+                <h4 style="font-size: 1.3rem; color: #10b981; margin-bottom: 1.5rem; position: relative; z-index: 2; font-family: sans-serif;">@blur__71</h4>
+                
+                <!-- نص الشكر والتعليق -->
+                <div style="background: rgba(0, 0, 0, 0.70); backdrop-filter: blur(10px); padding: 1.5rem; border-radius: 16px; position: relative; z-index: 2; margin-bottom: 2.5rem; border-right: 4px solid #10b981; border-top: 1px solid rgba(255,255,255,0.1); border-left: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.8);">
+                    <p id="supporterDesc" style="color: #fde047; font-size: 1.5rem; font-weight: bold; line-height: 1.6; margin: 0;">
+                        " يرجال تحيه لك مستقبل استمررر "
+                    </p>
+                    <p style="color: #94a3b8; font-size: 1rem; margin-top: 1rem;">- رسالة دعم من بلور ✨</p>
+                </div>
+                
+                <!-- أزرار الحسابات -->
+                <div id="supporterLinks" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; z-index: 2;">
+                    <a href="https://youtube.com/@blur__71?si=nItvWALy6ERWl2X4" target="_blank" class="btn" style="background: linear-gradient(135deg, #FF0000, #cc0000); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 1.3rem; padding: 0.8rem 2rem; border-radius: 12px; font-weight: bold; box-shadow: 0 5px 15px rgba(255, 0, 0, 0.3); transition: transform 0.2s;">▶️ يوتيوب</a>
+                    <a href="https://www.instagram.com/blur__71?igsh=OTcwaXp2MjRjbzhv" target="_blank" class="btn" style="background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 1.3rem; padding: 0.8rem 2rem; border-radius: 12px; font-weight: bold; box-shadow: 0 5px 15px rgba(220, 39, 67, 0.3); transition: transform 0.2s;">📸 انستجرام</a>
+                </div>
+            </div>
+
+            <button class="btn" style="background: transparent; border: 2px solid #64748b; color: #cbd5e1; width: 100%; padding: 1rem; font-size: 1.5rem; margin-top: 1.5rem;" onclick="closeSupporters()">إغلاق الشاشة ❌</button>
         </div>
     </div>
 
@@ -479,59 +531,68 @@
     <div class="header">
         <h1 id="mainTitle">حروف مع طلال 🐝</h1>
         <p class="instructions">
-            الفريق <span class="blue">الأزرق</span> يبدأ من الأعلى ويهدف للأسفل. <br>
+            الفريق <span class="blue">الأزرق</span> يبدأ من الأعلى ويهدف للأسفل. |
             الفريق <span class="red">الأحمر</span> يبدأ من اليمين ويهدف لليسار.
         </p>
     </div>
 
-    <!-- لوحة النقاط -->
-    <div class="scoreboard-wrapper">
-        <div id="roundsGoalDisplay" class="rounds-target">الهدف: الفوز في 3 جولات 🏆</div>
-        
-        <div class="scoreboard">
-            <div class="team-score blue" onclick="if(isHost) forceTurn('blue')">
-                <div class="team-title active-turn" id="titleBlue">🔵 الفريق الأزرق</div>
-                <div class="score-row">
-                    <div class="score-item">
-                        <div class="score-label">الجولات</div>
-                        <div class="score-val" id="roundsBlue" style="color: #60a5fa;">0</div>
+    <button class="settings-btn" id="muteBtn" onclick="toggleMute()" style="top: 20px; left: 80px;" title="كتم / تشغيل الصوت">🔊</button>
+    
+    <div class="game-layout" id="mainGameContainer">
+        <div class="scoreboard-side">
+            <div class="scoreboard-wrapper">
+                <div id="roundsGoalDisplay" class="rounds-target">الهدف: الفوز في 3 جولات 🏆</div>
+                
+                <div class="scoreboard">
+                    <div class="team-score blue" onclick="if(isHost) forceTurn('blue')">
+                        <div class="team-title active-turn" id="titleBlue">🔵 الفريق الأزرق</div>
+                        <div class="score-row">
+                            <div class="score-item">
+                                <div class="score-label">الجولات</div>
+                                <div class="score-val" id="roundsBlue" style="color: #60a5fa; text-shadow: 0 0 15px rgba(96, 165, 250, 0.6);">0</div>
+                            </div>
+                            <div class="score-item">
+                                <div class="score-label">الخلايا</div>
+                                <div class="score-val" id="scoreBlue">0</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="score-item">
-                        <div class="score-label">الخلايا</div>
-                        <div class="score-val" id="scoreBlue">0</div>
+                    <div class="team-score red" onclick="if(isHost) forceTurn('red')">
+                        <div class="team-title" id="titleRed">🔴 الفريق الأحمر</div>
+                        <div class="score-row">
+                            <div class="score-item">
+                                <div class="score-label">الجولات</div>
+                                <div class="score-val" id="roundsRed" style="color: #f87171; text-shadow: 0 0 15px rgba(248, 113, 113, 0.6);">0</div>
+                            </div>
+                            <div class="score-item">
+                                <div class="score-label">الخلايا</div>
+                                <div class="score-val" id="scoreRed">0</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="team-score red" onclick="if(isHost) forceTurn('red')">
-                <div class="team-title" id="titleRed">🔴 الفريق الأحمر</div>
-                <div class="score-row">
-                    <div class="score-item">
-                        <div class="score-label">الجولات</div>
-                        <div class="score-val" id="roundsRed" style="color: #f87171;">0</div>
-                    </div>
-                    <div class="score-item">
-                        <div class="score-label">الخلايا</div>
-                        <div class="score-val" id="scoreRed">0</div>
-                    </div>
-                </div>
+            
+            <div id="sideControls" style="margin-top: 1rem; display: flex; justify-content: center; width: 100%;">
+                <button class="btn btn-clear" onclick="hardResetGame()" style="width: 100%; padding: 1.2rem; font-size: 1.4rem; white-space: nowrap;">🔄 مباراة جديدة بالكامل</button>
+            </div>
+        </div>
+
+        <!-- الجانب الأيسر: شبكة الخلايا -->
+        <div class="board-side">
+            <div class="board-container" id="board">
+                <!-- يتم رسم الخلايا بواسطة JavaScript -->
             </div>
         </div>
     </div>
 
-    <!-- شبكة الخلايا -->
-    <div class="board-container" id="board">
-        <!-- يتم رسم الخلايا بواسطة JavaScript -->
-    </div>
-
-    <div class="controls">
-        <button class="btn btn-clear" onclick="hardResetGame()">🔄 مباراة جديدة بالكامل</button>
-    </div>
-
+    <audio id="bgMusicSrc" src="bg_music.mp3" preload="auto" loop></audio>
     <!-- المودال الخاص باحتلال الخلية -->
     <div class="modal-overlay" id="modalOverlay">
-        <div class="modal-content">
+        <div class="modal-content" style="position: relative;">
+            <div id="categoryHint" style="display: none; font-size: 3.5rem; color: #fbbf24; padding: 4rem 1rem; text-shadow: 0 0 20px rgba(251, 191, 36, 0.4); font-weight: 800; animation: pulse 1s infinite alternate;">⏳ كشف الفئة...</div>
             <h2 class="modal-letter" id="modalLetter">أ</h2>
-            <p class="modal-question" id="modalQuestion"></p>
+            <p class="modal-question" id="modalQuestion" style="display: none;"></p>
             
             <div id="timerContainer" style="display:none; font-size: 2.5rem; font-weight: bold; margin: 15px 0; color: #fbbf24;">
                 ⏱️ <span id="timerDisplay">30</span>
@@ -620,6 +681,7 @@
 
         function playTick() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (isMuted) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
@@ -632,6 +694,7 @@
 
         function playAssign() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (isMuted) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
@@ -644,6 +707,7 @@
 
         function playWinTune() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (isMuted) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
@@ -659,24 +723,26 @@
 
         function playHostSound(type) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (type === 'correct') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(900, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-                osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.3);
-            } else if (type === 'wrong') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.3);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
-                osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.5);
+            if (!isMuted) {
+                if (type === 'correct') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(900, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'wrong') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.5);
+                }
             }
             syncToStorage('sound_' + type);
         }
@@ -891,8 +957,29 @@
         // Multi-screen Mode
         let isHost = true;
         let lastSoundTime = 0;
+        let isMuted = false;
+        let isBgMusicPlaying = false;
+        let currentLetterCategory = "";
+        let currentQuestionText = "";
 
         let evtSource = null;
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('muteBtn').innerText = isMuted ? '🔇' : '🔊';
+            const bgMusic = document.getElementById('bgMusicSrc');
+            if (bgMusic) bgMusic.muted = isMuted;
+            syncToStorage('muteToggle');
+        }
+
+        function startBgMusic() {
+            if (isBgMusicPlaying || isMuted) return;
+            const bgMusic = document.getElementById('bgMusicSrc');
+            if (bgMusic) {
+                bgMusic.play().catch(e => console.log('Audio start blocked by browser'));
+                isBgMusicPlaying = true;
+            }
+        }
 
         function showRoleSelection() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -925,7 +1012,7 @@
                 document.getElementById('homeBtn').style.display = 'inline-block';
                 document.getElementById('fullscreenBtn').style.display = 'inline-block';
                 document.getElementById('historyBtn').style.display = 'none';
-                document.querySelector('.controls').style.display = 'none';
+                document.getElementById('sideControls').style.display = 'none';
                 
                 document.getElementById('roundsGoalDisplay').innerText = `بانتظار تلقي الإشارة من المُقدم ⏳...`;
                 
@@ -995,6 +1082,7 @@
 
         function startTimer() {
             if (!isHost) return;
+            startBgMusic();
             const ms = currentTimerDuration * 1000;
             syncToStorage(null, Date.now() + ms); 
             document.getElementById('startTimerBtn').style.display = 'none';
@@ -1003,6 +1091,13 @@
 
         function stopTimer() {
             if (!isHost) return;
+            const bgMusic = document.getElementById('bgMusicSrc');
+            if (bgMusic) {
+                bgMusic.pause();
+                bgMusic.currentTime = 0;
+                bgMusic.playbackRate = 1.0;
+                isBgMusicPlaying = false;
+            }
             syncToStorage(null, null); 
             document.getElementById('startTimerBtn').style.display = 'inline-block';
             document.getElementById('stopTimerBtn').style.display = 'none';
@@ -1042,6 +1137,8 @@
                 
                 if (remaining <= 10) {
                     document.getElementById('timerDisplay').style.color = '#ef4444';
+                    const bgMusic = document.getElementById('bgMusicSrc');
+                    if (bgMusic) bgMusic.playbackRate = 1.2;
                     if (now - lastTickTime > 950) {
                         playTick();
                         lastTickTime = now;
@@ -1313,6 +1410,8 @@
             const winningCellIds = winPath ? winPath.map(n => `cell-${rowColToIndex(n.r, n.c)}`) : [];
             winState = { team, isMatchWin, winningCellIds };
             
+            if (isMatchWin) saveLeaderboard(team);
+            
             updateScoreboard();
             applyBoardStateUI();
             showWinModal(team, isMatchWin);
@@ -1503,7 +1602,9 @@
         ];
 
         function fetchQuestionData(letter) {
+            const categoriesOptions = ["معلومة عامة 🌍", "تاريخ 📜", "رياضة ⚽", "جغرافيا 🗺️", "علوم الفضاء 🛸", "أفلام ومسلسلات 🎬"];
             const questions = typeof externalQuestionsDB !== 'undefined' ? (externalQuestionsDB[letter] || questionsDB[letter]) : (shortQuestionsDB[letter] || questionsDB[letter]);
+            
             if (questions && questions.length > 0) {
                 if (!usedQuestions[letter]) usedQuestions[letter] = [];
                 
@@ -1521,15 +1622,17 @@
                 usedQuestions[letter].push(randomChoice); 
                 
                 const randomQ = questions[randomChoice];
-                document.getElementById('modalQuestion').innerText = randomQ.q;
+                document.getElementById('modalQuestion').innerHTML = randomQ.q;
                 currentLetterAnswer = randomQ.a;
+                currentLetterCategory = randomQ.c || categoriesOptions[Math.floor(Math.random() * categoriesOptions.length)];
                 
                 // حفظ السؤال للسجل
                 if (isHost) hostHistory.unshift({ letter: letter, q: randomQ.q, a: randomQ.a });
                 
             } else {
-                document.getElementById('modalQuestion').innerText = "لا يوجد سؤال مسجل.";
+                document.getElementById('modalQuestion').innerHTML = "لا يوجد سؤال مسجل.";
                 currentLetterAnswer = "-";
+                currentLetterCategory = "عشوائي ❓";
             }
         }
         
@@ -1564,16 +1667,32 @@
             const startTimerBtn = document.getElementById('startTimerBtn');
             if (startTimerBtn) startTimerBtn.innerText = "▶️ بدء العداد (30ث)";
 
-            if(wildcardCells.includes(cellId)) {
+            document.getElementById('modalLetter').innerText = letter;
+            document.getElementById('modalLetter').style.display = 'none';
+            document.getElementById('modalQuestion').style.display = 'none';
+            document.getElementById('modalAnswer').style.display = 'none';
+            document.getElementById('showAnswerBtn').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            
+            if (isHost) {
+                document.getElementById('soundControls').style.display = 'none';
+                document.getElementById('hostTimerControls').style.display = 'none';
+                document.getElementById('jokerControls').style.display = 'none';
+            }
+
+            let isWildcard = wildcardCells.includes(cellId);
+
+            if(isWildcard) {
                 const events = [
-                    { title: '🎁 هدية مجانية!', desc: 'مبروك! ستحصلون على هذه الخلية ومحتوياتها مجاناً دون الحاجة للجواب.', type: 'gift' },
-                    { title: '⏱️ تحدي السرعة!', desc: 'أمامكم 10 ثوانٍ فقط بدلاً من 30 للإجابة على هذا السؤال!', type: 'speed' },
-                    { title: '🌪️ العاصفة!', desc: 'أجب بشكل صحيح لتدمير وإفراغ خلية عشوائية يملكها الفريق الخصم!', type: 'storm' }
+                    { title: '🎁 هدية مجانية!', desc: 'مبروك! ستحصلون على هذه الخلية مجاناً.', type: 'gift' },
+                    { title: '⏱️ تحدي السرعة!', desc: 'أمامكم 10 ثوانٍ فقط بدلاً من 30 للإجابة!', type: 'speed' },
+                    { title: '🌪️ العاصفة!', desc: 'أجب بشكل صحيح لتدمير خلية للفريق الخصم!', type: 'storm' }
                 ];
                 const evt = events[Math.floor(Math.random() * events.length)];
                 
                 document.getElementById('modalLetter').innerText = "مفاجأة 🎲";
-                document.getElementById('modalQuestion').innerText = evt.title + "\n" + evt.desc;
+                document.getElementById('modalQuestion').innerHTML = evt.title + "<br>" + evt.desc;
+                currentLetterCategory = "مفاجأة 🎲";
                 
                 if (evt.type === 'gift') {
                     currentLetterAnswer = "(هدية مجانية - لا تحتاج إجابة)";
@@ -1582,45 +1701,44 @@
                     fetchQuestionData(letter);
                     currentTimerDuration = 10;
                     if (startTimerBtn) startTimerBtn.innerText = "▶️ بدء العداد (10ث)";
-                    // Append actual question below the event description
-                    const qData = document.getElementById('modalQuestion').innerText;
-                    setTimeout(() => {
-                        const questionDesc = document.getElementById('modalQuestion').innerHTML; // The standard text fetched by fetchQuestionData
-                        document.getElementById('modalQuestion').innerHTML = `<strong style='color:#fbbf24'>${evt.title}</strong><br><span style='font-size:1.1rem'>${evt.desc}</span><hr style='border-color:rgba(255,255,255,0.1); margin: 15px 0;'>${questionDesc}`;
-                    }, 50); // Little hack to overwrite after fetchQuestionData
+                    const questionDesc = document.getElementById('modalQuestion').innerHTML;
+                    document.getElementById('modalQuestion').innerHTML = `<strong style='color:#fbbf24'>${evt.title}</strong><br><span style='font-size:1.1rem'>${evt.desc}</span><hr style='border-color:rgba(255,255,255,0.1); margin: 15px 0;'>${questionDesc}`;
                     document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
                 } else if (evt.type === 'storm') {
                     fetchQuestionData(letter);
-                    setTimeout(() => {
-                        const questionDesc = document.getElementById('modalQuestion').innerHTML; 
-                        document.getElementById('modalQuestion').innerHTML = `<strong style='color:#ef4444'>${evt.title}</strong><br><span style='font-size:1.1rem'>${evt.desc}</span><hr style='border-color:rgba(255,255,255,0.1); margin: 15px 0;'>${questionDesc}`;
-                    }, 50);
-                    // Mark global variable to know it's a storm
+                    const questionDesc = document.getElementById('modalQuestion').innerHTML; 
+                    document.getElementById('modalQuestion').innerHTML = `<strong style='color:#ef4444'>${evt.title}</strong><br><span style='font-size:1.1rem'>${evt.desc}</span><hr style='border-color:rgba(255,255,255,0.1); margin: 15px 0;'>${questionDesc}`;
                     window.pendingStormAction = true;
                     document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
                 }
                 
-                wildcardCells = wildcardCells.filter(id => id !== cellId); // Remove so it plays once
+                wildcardCells = wildcardCells.filter(id => id !== cellId); 
             } else {
-                document.getElementById('modalLetter').innerText = letter;
                 fetchQuestionData(letter);
                 document.getElementById('modalAnswer').innerText = "💡 الجواب: " + currentLetterAnswer;
             }
             
-            document.getElementById('modalAnswer').style.display = 'none';
-            document.getElementById('showAnswerBtn').style.display = 'inline-block';
-            
-            if (isHost) {
-                document.getElementById('soundControls').style.display = 'block';
-                document.getElementById('hostTimerControls').style.display = 'block';
-                stopTimer(); // Ensure timer is reset on new question
-                updateJokerButtons();
-            } else {
-                document.getElementById('soundControls').style.display = 'none';
-                document.getElementById('hostTimerControls').style.display = 'none';
-                document.getElementById('jokerControls').style.display = 'none';
-            }
+            document.getElementById('categoryHint').innerText = "الفئة: " + currentLetterCategory;
+            document.getElementById('categoryHint').style.display = 'block';
             document.getElementById('modalOverlay').classList.add('active');
+            
+            setTimeout(() => {
+                if(currentSelectedCellId !== cellId) return; 
+                
+                document.getElementById('categoryHint').style.display = 'none';
+                document.getElementById('modalLetter').style.display = 'block';
+                document.getElementById('modalQuestion').style.display = 'block';
+                document.getElementById('timerContainer').style.display = 'block';
+                
+                if (isHost) {
+                    document.getElementById('soundControls').style.display = 'block';
+                    document.getElementById('hostTimerControls').style.display = 'block';
+                    document.getElementById('jokerControls').style.display = 'inline-block';
+                    document.getElementById('showAnswerBtn').style.display = 'inline-block';
+                    stopTimer(); 
+                    updateJokerButtons();
+                }
+            }, 2000); // 2 Seconds TV Category Show
             
             applyBoardStateUI();
             syncToStorage('tick');
@@ -1831,10 +1949,44 @@
             document.getElementById('roundsRed').innerText = roundsWon.red;
         }
 
-        // الإعداد الافتراضي
+        // الإعداد الافتراضي واللوحة الشرفية
         window.onload = () => {
             // ننتظر من المستخدم اختيار الدور عبر الشاشة
         };
+
+        // Leaderboard logic
+        function saveLeaderboard(team) {
+            const tName = team === 'blue' ? (document.getElementById('blueTeamInput').value || 'الفريق الأزرق') : (document.getElementById('redTeamInput').value || 'الفريق الأحمر');
+            let board = JSON.parse(localStorage.getItem('7roof_leaderboard') || '[]');
+            board.unshift({ team: tName, date: new Date().toLocaleDateString('ar-SA', {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'}) });
+            localStorage.setItem('7roof_leaderboard', JSON.stringify(board));
+        }
+
+        function showLeaderboard() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const board = JSON.parse(localStorage.getItem('7roof_leaderboard') || '[]');
+            const list = document.getElementById('leaderboardList');
+            if(board.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #94a3b8; margin: 3rem 0;">لا توجد سجلات بعد.. العب مباراة لتسجيل أول بطل تاريخي!</p>';
+            } else {
+                list.innerHTML = board.map((m, i) => `<div style="background: rgba(255,255,255,0.05); padding: 15px; margin-bottom: 12px; border-radius: 12px; border-right: 4px solid #fbbf24; text-align:right;">
+                    <span style="color:#fbbf24; font-weight:bold;">البطولة 🏆: فاز بها ${m.team}</span>
+                    <span style="font-size: 1rem; color: #94a3b8; float: left; margin-top: 5px;" dir="ltr">${m.date}</span>
+                </div>`).join('');
+            }
+            document.getElementById('leaderboardOverlay').classList.add('active');
+        }
+
+        function closeLeaderboard() {
+            document.getElementById('leaderboardOverlay').classList.remove('active');
+        }
+
+        function clearLeaderboard() {
+            if(confirm('هل أنت متأكد من مسح جميع السجلات التاريخية للبطولات؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+                localStorage.removeItem('7roof_leaderboard');
+                showLeaderboard();
+            }
+        }
     </script>
 </body>
 </html>
