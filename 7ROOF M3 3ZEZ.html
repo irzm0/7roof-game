@@ -262,8 +262,18 @@
             background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3); color: #fff;
             transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
+        
+        .btn-supporters {
+            background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #10b981; backdrop-filter: blur(10px);
+        }
+        
+        .btn-supporters:hover {
+            background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #fff;
+            transform: translateY(-3px); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+        }
 
-        #instructionsOverlay { z-index: 700; }
+        #instructionsOverlay, #supportersOverlay { z-index: 700; }
         .instructions-list { text-align: right; color: #e2e8f0; font-size: 1.3rem; line-height: 1.8; margin-bottom: 2rem; list-style-position: inside; }
 
         /* شاشة اختيار الدور */
@@ -401,6 +411,7 @@
             <div class="start-buttons-wrapper">
                 <button class="btn-premium btn-play" onclick="showRoleSelection()">بدء المواجهة ▶️</button>
                 <button class="btn-premium btn-how" onclick="showInstructions()">كيف تلعب؟ 📖</button>
+                <button class="btn-premium btn-supporters" onclick="showSupporters()">الداعمين 💎</button>
             </div>
         </div>
     </div>
@@ -426,6 +437,21 @@
                 </li>
             </ul>
             <button class="btn btn-blue" onclick="closeInstructions()" style="width: 100%; padding: 1rem; font-size: 1.5rem; margin-top: 1rem;">جاهز للعب! 👍</button>
+        </div>
+    </div>
+
+    <!-- نافذة الداعمين -->
+    <div class="modal-overlay" id="supportersOverlay">
+        <div class="modal-content" style="max-width: 600px; max-height: 85vh; overflow-y: auto;">
+            <h2 class="modal-letter" style="font-size: 3rem; margin-bottom: 1.5rem; color: #10b981; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);">💎 الداعمين</h2>
+            <p style="color: #cbd5e1; font-size: 1.3rem; margin-bottom: 2rem; line-height: 1.6;">
+                شكراً لكل من ساهم ودعم هذا المشروع ليخرج بأفضل صورة:
+            </p>
+            <ul class="instructions-list" style="text-align: right; color: #f8fafc; font-size: 1.4rem; list-style: none; padding-right: 0;">
+                <li style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; border-right: 4px solid #10b981;">👑 الداعم الأول هنا</li>
+                <li style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; border-right: 4px solid #3b82f6;">⭐ الداعم الثاني هنا</li>
+            </ul>
+            <button class="btn" style="background: #10b981; width: 100%; padding: 1rem; font-size: 1.5rem; margin-top: 1rem;" onclick="closeSupporters()">إغلاق الشاشة ❌</button>
         </div>
     </div>
 
@@ -882,6 +908,15 @@
             document.getElementById('instructionsOverlay').classList.remove('active');
         }
 
+        function showSupporters() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            document.getElementById('supportersOverlay').classList.add('active');
+        }
+
+        function closeSupporters() {
+            document.getElementById('supportersOverlay').classList.remove('active');
+        }
+
         function selectRole(role) {
             document.getElementById('roleOverlay').style.display = 'none';
             if (role === 'board') {
@@ -917,6 +952,7 @@
                 document.getElementById('winModalOverlay').classList.remove('active');
                 document.getElementById('instructionsOverlay').classList.remove('active');
                 document.getElementById('historyOverlay').classList.remove('active');
+                document.getElementById('supportersOverlay').classList.remove('active');
                 
                 document.getElementById('mainSettingsBtn').style.display = 'none';
                 document.getElementById('homeBtn').style.display = 'none';
