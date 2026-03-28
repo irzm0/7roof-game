@@ -604,24 +604,30 @@
                 ⏱️ <span id="timerDisplay">30</span>
             </div>
             
-            <div id="hostTimerControls" style="display:none; margin-bottom: 10px;">
-                <button class="btn btn-answer" id="startTimerBtn" onclick="startTimer()" style="background: transparent; border-color: #fbbf24; color: #fbbf24;">▶️ بدء العداد (30ث)</button>
-                <button class="btn btn-answer" id="stopTimerBtn" onclick="stopTimer()" style="background: transparent; border-color: #ef4444; color: #ef4444; display: none;">⏹️ إيقاف العداد</button>
-            </div>
+            <div id="hostTimerControls" style="display:none;"></div>
+            <div id="jokerControls" style="display:none;"></div>
+            <div id="soundControls" style="display: none;"></div>
             
-            <div style="margin-bottom: 1.5rem;">
-                <button class="btn btn-answer" id="showAnswerBtn" onclick="showAnswer()">👁️ إظهار الإجابة</button>
-                <div id="jokerControls" style="display: inline-block; margin-right: 1rem;">
-                    <button class="btn btn-answer" id="changeQuestionBtnHost" onclick="changeQuestionHost()" style="border-color: #a855f7; color: #a855f7; margin-left: 0.5rem; display:none;">🔄 تغيير (المقدم)</button>
-                    <button class="btn btn-answer" id="stealQuestionBtn" onclick="triggerStealQuestion()" style="border-color: #fca5a5; color: #fca5a5; margin-left: 0.5rem; display:none;">💣 سؤال سطو (صعب)</button>
-                    <button class="btn btn-answer" id="changeQuestionBtnRed" onclick="changeQuestion('red')" style="border-color: #ef4444; color: #ef4444; margin-left: 0.5rem; display:none;">🃏 تغيير (أحمر)</button>
-                    <button class="btn btn-answer" id="changeQuestionBtnBlue" onclick="changeQuestion('blue')" style="border-color: #3b82f6; color: #3b82f6; display:none;">🃏 تغيير (أزرق)</button>
+            <div id="hostGridControls" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; width: 100%;">
+                
+                <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                    <button class="btn btn-answer" id="startTimerBtn" onclick="startTimer()" style="background: transparent; border-color: #fbbf24; color: #fbbf24; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">▶️ العداد</button>
+                    <button class="btn btn-answer" id="stopTimerBtn" onclick="stopTimer()" style="background: transparent; border-color: #ef4444; color: #ef4444; display: none; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">⏹️ إيقاف</button>
                 </div>
-            </div>
-            
-            <div id="soundControls" style="margin-bottom: 1.5rem; display: none;">
-                <button class="btn btn-answer" onclick="playHostSound('correct')" style="border-color: #10b981; color: #10b981; margin-left: 1rem; border-style: solid;">✅ إجابة صحيحة</button>
-                <button class="btn btn-answer" onclick="playHostSound('wrong')" style="border-color: #ef4444; color: #ef4444; border-style: solid;">❌ إجابة خاطئة</button>
+                
+                <button class="btn btn-answer" id="showAnswerBtn" onclick="showAnswer()" style="width:100%; margin: 0; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">👁️ الإجابة</button>
+                
+                <button class="btn btn-answer" onclick="playHostSound('correct')" style="border-color: #10b981; color: #10b981; border-style: solid; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">✅ صح</button>
+                
+                <button class="btn btn-answer" id="changeQuestionBtnHost" onclick="changeQuestionHost()" style="border-color: #a855f7; color: #a855f7; display:none; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">🔄 تغيير</button>
+                
+                <button class="btn btn-answer" id="stealQuestionBtn" onclick="triggerStealQuestion()" style="border-color: #fca5a5; color: #fca5a5; display:none; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">💣 سطو</button>
+                
+                <button class="btn btn-answer" onclick="playHostSound('wrong')" style="border-color: #ef4444; color: #ef4444; border-style: solid; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">❌ خطأ</button>
+                
+                <button class="btn btn-answer" id="changeQuestionBtnBlue" onclick="changeQuestion('blue')" style="border-color: #3b82f6; color: #3b82f6; display:none; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">🃏 أزرق</button>
+                
+                <button class="btn btn-answer" id="changeQuestionBtnRed" onclick="changeQuestion('red')" style="border-color: #ef4444; color: #ef4444; display:none; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">🃏 أحمر</button>
             </div>
             
             <p id="modalAnswer" style="font-size: 1.4rem; margin-bottom: 2rem; color: #10b981; font-weight: bold; display: none;"></p>
@@ -1684,6 +1690,7 @@
                 document.getElementById('soundControls').style.display = 'none';
                 document.getElementById('hostTimerControls').style.display = 'none';
                 document.getElementById('jokerControls').style.display = 'none';
+                document.getElementById('hostGridControls').style.display = 'none';
             }
 
             let isWildcard = wildcardCells.includes(cellId);
@@ -1737,9 +1744,10 @@
                 document.getElementById('timerContainer').style.display = 'block';
                 
                 if (isHost) {
-                    document.getElementById('soundControls').style.display = 'block';
-                    document.getElementById('hostTimerControls').style.display = 'block';
-                    document.getElementById('jokerControls').style.display = 'inline-block';
+                    document.getElementById('soundControls').style.display = 'none';
+                    document.getElementById('hostTimerControls').style.display = 'none';
+                    document.getElementById('jokerControls').style.display = 'none';
+                    document.getElementById('hostGridControls').style.display = 'grid';
                     document.getElementById('showAnswerBtn').style.display = 'inline-block';
                     stopTimer(); 
                     updateJokerButtons();
