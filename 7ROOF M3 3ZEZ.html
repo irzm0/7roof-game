@@ -101,25 +101,40 @@
         .hex-wrap {
             position: relative; width: 90px; height: 104px;
             clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-            background: rgba(255, 255, 255, 0.2); margin: 0 4px; padding: 3px;
+            background: linear-gradient(145deg, #ffd700 0%, #b8860b 50%, #854d0e 100%);
+            margin: 0 4px; padding: 4.5px;
             display: flex; justify-content: center; align-items: center; cursor: pointer;
-            transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.2s ease;
         }
         .hex-inner {
+            position: relative;
             width: 100%; height: 100%;
             clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-            background: rgba(15, 23, 42, 0.95); display: flex; justify-content: center; align-items: center;
-            font-size: 2.5rem; font-weight: 800; color: #fbbf24; transition: all 0.15s ease;
+            background: radial-gradient(circle at 30% 30%, #334155 0%, #0f172a 80%);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.8rem; font-weight: 900; color: #e2e8f0; 
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.8), 0 0 15px rgba(255,255,255,0.2);
+            transition: all 0.25s ease;
         }
-        .hex-wrap:hover { transform: scale(1.15); z-index: 10; background: #fbbf24; box-shadow: 0 0 20px #fbbf24; }
-        .hex-wrap:hover .hex-inner { background: #451a03; color: #fde68a; }
+        
+        /* الطبقة الزجاجية (Glossy Sheen) البارزة 3D */
+        .hex-inner::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 100%);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 100%, 0% 100%, 0% 25%);
+            pointer-events: none;
+        }
 
-        .hex-wrap.team-blue { background: var(--blue-glow); transform: scale(1.05); z-index: 5; }
-        .hex-wrap.team-blue .hex-inner { background: var(--blue-bg); color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
-        .hex-wrap.team-red { background: var(--red-glow); transform: scale(1.05); z-index: 5; }
-        .hex-wrap.team-red .hex-inner { background: var(--red-bg); color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .hex-wrap:hover { transform: scale(1.15) translateY(-5px); z-index: 10; filter: drop-shadow(0 15px 20px rgba(0,0,0,0.6)); }
+        .hex-wrap:hover .hex-inner { background: radial-gradient(circle at 30% 30%, #78350f 0%, #451a03 80%); color: #fde68a; }
 
-        .hex-wrap.flip .hex-inner { transform: scaleX(0); transition: transform 0.15s ease-in; }
+        .hex-wrap.team-blue { background: linear-gradient(145deg, #e2e8f0 0%, #94a3b8 50%, #475569 100%); transform: scale(1.05); z-index: 5; filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.6)); }
+        .hex-wrap.team-blue .hex-inner { background: radial-gradient(circle at 30% 30%, #60a5fa 0%, #1e3a8a 80%); color: #ffffff; text-shadow: 0 0 15px rgba(255,255,255,0.8); }
+        
+        .hex-wrap.team-red { background: linear-gradient(145deg, #e2e8f0 0%, #94a3b8 50%, #475569 100%); transform: scale(1.05); z-index: 5; filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.6)); }
+        .hex-wrap.team-red .hex-inner { background: radial-gradient(circle at 30% 30%, #f87171 0%, #991b1b 80%); color: #ffffff; text-shadow: 0 0 15px rgba(255,255,255,0.8); }
+
+        .hex-wrap.flip .hex-inner { transform: scaleX(0); transition: transform 0.2s ease-in; }
 
         .golden-cell .hex-inner {
             border: 3px solid #fbbf24;
