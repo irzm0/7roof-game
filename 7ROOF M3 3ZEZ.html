@@ -370,6 +370,17 @@
         body.fullscreen-mode #fullscreenBtn { opacity: 0.1; }
         body.fullscreen-mode #fullscreenBtn:hover { opacity: 1; }
         
+        /* وضع الشاشات الذكية TV Mode (الأداء السريع) */
+        body.tv-mode .bg-bubbles, body.tv-mode .ambient-glow { display: none !important; }
+        body.tv-mode * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; filter: none !important; box-shadow: none !important; text-shadow: none !important; }
+        body.tv-mode .hex-wrap { filter: none !important; box-shadow: none !important; transition: none !important; }
+        body.tv-mode .hex-wrap:hover { transform: scale(1.05); z-index: 10; }
+        body.tv-mode .hex-inner::after { display: none !important; }
+        body.tv-mode .start-icon { animation: none !important; filter: none !important; }
+        body.tv-mode .team-score { box-shadow: none !important; border: 2px solid rgba(255,255,255,0.2) !important; background: rgba(30,30,40,0.9) !important; transition: none !important; }
+        body.tv-mode .modal-content, body.tv-mode .board-container { background: rgb(15, 23, 42) !important; box-shadow: none !important; border: 2px solid #334155 !important; }
+        body.tv-mode .golden-cell .hex-inner { animation: none !important; border-color: #fbbf24; }
+        
         @media (max-width: 1024px) {
             .game-layout { flex-direction: column; gap: 1rem; justify-content: center; align-items: center; padding: 1rem 0; }
             .board-side { justify-content: center; width: 100%; }
@@ -675,6 +686,11 @@
 
                 <label style="color: #cbd5e1; font-size: 1.2rem; display: block; margin-bottom: 0.5rem;">عدد الجولات للفوز بالمباراة الكبرى:</label>
                 <input type="number" id="roundsGoalInput" class="settings-input" min="1" max="10" />
+
+                <label style="color: #fbbf24; font-size: 1.2rem; display: flex; align-items: center; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; cursor: pointer;">
+                    تفعيل وضع الشاشات الذكية (TV Mode - أداء سريع) 📺
+                    <input type="checkbox" id="tvModeCheckbox" style="transform: scale(1.5); margin-left: 15px; cursor: pointer;" />
+                </label>
             </div>
 
             <div class="modal-buttons" style="margin-top: 1rem;">
@@ -987,6 +1003,7 @@
         let lastSoundTime = 0;
         let isMuted = false;
         let isBgMusicPlaying = false;
+        let isTvMode = false;
         let currentLetterCategory = "";
         let currentQuestionText = "";
 
@@ -1186,6 +1203,7 @@
             const state = {
                 boardState, scores, roundsWon, gameTitle, roundsGoal, lettersLayout, isGameOver, winState, teamNames, teamJokers,
                 activeCellId: currentSelectedCellId,
+                isTvMode: isTvMode,
                 timerEndAt: timerEndAt,
                 currentTurn: currentTurn,
                 goldenCells: goldenCells,
@@ -1234,6 +1252,13 @@
             teamStreaks = state.teamStreaks || { blue: 0, red: 0 };
             wildcardCells = state.wildcardCells || [];
             currentTimerDuration = state.currentTimerDuration || 30;
+            
+            if (state.isTvMode !== undefined && state.isTvMode !== isTvMode) {
+                isTvMode = state.isTvMode;
+                if (isTvMode) document.body.classList.add('tv-mode');
+                else document.body.classList.remove('tv-mode');
+            }
+            
             updateTurnUI();
 
             // Redraw board if layout changed or newly initialized
@@ -1275,6 +1300,7 @@
             document.getElementById('blueTeamInput').value = teamNames.blue;
             document.getElementById('redTeamInput').value = teamNames.red;
             document.getElementById('roundsGoalInput').value = roundsGoal;
+            document.getElementById('tvModeCheckbox').checked = isTvMode;
         }
 
         function closeSettings() {
@@ -1287,6 +1313,10 @@
             if(document.getElementById('redTeamInput').value) teamNames.red = document.getElementById('redTeamInput').value;
             const parsedRounds = parseInt(document.getElementById('roundsGoalInput').value);
             roundsGoal = (parsedRounds > 0 && parsedRounds <= 10) ? parsedRounds : roundsGoal;
+            
+            isTvMode = document.getElementById('tvModeCheckbox').checked;
+            if (isTvMode) document.body.classList.add('tv-mode');
+            else document.body.classList.remove('tv-mode');
             
             document.getElementById('mainTitle').innerText = gameTitle + " 🐝";
             document.getElementById('roundsGoalDisplay').innerText = `الهدف: الفوز في ${roundsGoal} جولات 🏆`;
@@ -1422,7 +1452,7 @@
                     clearInterval(interval);
                     return;
                 }
-                if (typeof confetti === 'function') {
+                if (typeof confetti === 'function' && !isTvMode) {
                     confetti({ particleCount: 20, angle: 60, spread: 55, origin: { x: 0 }, colors: colors, disableForReducedMotion: true });
                     confetti({ particleCount: 20, angle: 120, spread: 55, origin: { x: 1 }, colors: colors, disableForReducedMotion: true });
                 }
