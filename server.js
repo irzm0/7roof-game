@@ -1,14 +1,20 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const url = require('url');
 
-let gameState = null;
-let clients = [];
+// مستودع الغرف (كل غرفة تحتوي على حالتها وعملائها المتصلين)
+let rooms = {};
 
 const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*'); 
 
-    if (req.method === 'GET' && req.url === '/') {
+    // معالجة الرابط واستخراج اسم الغرفة من الـ Query
+    const reqUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const pathname = reqUrl.pathname;
+    const room = reqUrl.searchParams.get('room') || 'default';
+
+    if (req.method === 'GET' && pathname === '/') {
         fs.readFile(path.join(__dirname, '7ROOF M3 3ZEZ.html'), (err, data) => {
             if (err) {
                 res.writeHead(500);
@@ -18,63 +24,73 @@ const server = http.createServer((req, res) => {
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
             res.end(data);
         });
-    } else if (req.method === 'GET' && req.url === '/game_logo.png') {
+    } else if (req.method === 'GET' && pathname === '/game_logo.png') {
         const logoPath = 'C:\\Users\\PCD\\.gemini\\antigravity\\brain\\c15c2e02-5921-4339-8e11-2ee6a59e772a\\talal_logo_2_1774032839194.png';
         fs.readFile(logoPath, (err, data) => {
             if (err) { res.writeHead(404); res.end('Logo Not Found'); return; }
             res.writeHead(200, { 'Content-Type': 'image/png' });
             res.end(data);
         });
-    } else if (req.method === 'GET' && req.url === '/questions.js') {
+    } else if (req.method === 'GET' && pathname === '/questions.js') {
         fs.readFile(path.join(__dirname, 'questions.js'), (err, data) => {
             if (err) { res.writeHead(404); res.end('Not Found'); return; }
             res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
             res.end(data);
         });
-    } else if (req.method === 'GET' && req.url === '/questions_batch1.js') {
+    } else if (req.method === 'GET' && pathname === '/questions_batch1.js') {
         fs.readFile(path.join(__dirname, 'questions_batch1.js'), (err, data) => {
             if (err) { res.writeHead(404); res.end('Not Found'); return; }
             res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
             res.end(data);
         });
-    } else if (req.method === 'GET' && req.url === '/questions_batch2.js') {
+    } else if (req.method === 'GET' && pathname === '/questions_batch2.js') {
         fs.readFile(path.join(__dirname, 'questions_batch2.js'), (err, data) => {
             if (err) { res.writeHead(404); res.end('Not Found'); return; }
             res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
             res.end(data);
         });
-    } else if (req.method === 'GET' && req.url === '/questions_batch3.js') {
+    } else if (req.method === 'GET' && pathname === '/questions_batch3.js') {
         fs.readFile(path.join(__dirname, 'questions_batch3.js'), (err, data) => {
             if (err) { res.writeHead(404); res.end('Not Found'); return; }
             res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
             res.end(data);
         });
-    } else if (req.method === 'GET' && req.url === '/questions_batch4.js') {
+    } else if (req.method === 'GET' && pathname === '/questions_batch4.js') {
         fs.readFile(path.join(__dirname, 'questions_batch4.js'), (err, data) => {
             if (err) { res.writeHead(404); res.end('Not Found'); return; }
             res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
             res.end(data);
         });
-    } else if (req.method === 'GET' && req.url === '/events') {
+    } else if (req.method === 'GET' && pathname === '/events') {
         res.writeHead(200, {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive'
         });
         
-        if (gameState) res.write(`data: ${JSON.stringify(gameState)}\n\n`);
+        if (!rooms[room]) {
+            rooms[room] = { gameState: null, clients: [] };
+        }
         
-        clients.push(res);
+        if (rooms[room].gameState) res.write(`data: ${JSON.stringify(rooms[room].gameState)}\n\n`);
+        
+        rooms[room].clients.push(res);
         req.on('close', () => {
-            clients = clients.filter(client => client !== res);
+            if(rooms[room]) {
+                rooms[room].clients = rooms[room].clients.filter(client => client !== res);
+                // Optional cleanup: if (!rooms[room].clients.length) delete rooms[room];
+            }
         });
-    } else if (req.method === 'POST' && req.url === '/update') {
+    } else if (req.method === 'POST' && pathname === '/update') {
         let body = '';
         req.on('data', chunk => body += chunk.toString());
         req.on('end', () => {
             try {
-                gameState = JSON.parse(body);
-                clients.forEach(client => client.write(`data: ${JSON.stringify(gameState)}\n\n`));
+                if (!rooms[room]) {
+                    rooms[room] = { gameState: null, clients: [] };
+                }
+                rooms[room].gameState = JSON.parse(body);
+                rooms[room].clients.forEach(client => client.write(`data: ${JSON.stringify(rooms[room].gameState)}\n\n`));
                 res.writeHead(200);
                 res.end('OK');
             } catch (e) {
@@ -91,9 +107,8 @@ const server = http.createServer((req, res) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`=======================================`);
-    console.log(`🐝 خادم مزامنة لعبة حروف عزيز يعمل الآن!`);
-    console.log(`🌐 ابحث عن الآي بي المحلي الخاص بك (IPv4)`);
-    console.log(`   ثم افتح الرابط التالي في التابلت أو التلفزيون:`);
-    console.log(`   http://<YOUR_LOCAL_IP>:3000`);
+    console.log(`🐝 خادم مزامنة لعبة أداة الغرف يعمل الآن!`);
+    console.log(`🌐 يمكنك لعب أكثر من فريق بوقت واحد بأمان`);
+    console.log(`   http://localhost:3000`);
     console.log(`=======================================`);
 });

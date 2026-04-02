@@ -233,10 +233,19 @@
             background: rgba(15, 23, 42, 0.4);
             backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 30px; padding: 4rem 3rem; text-align: center;
+            border-radius: 30px; padding: 4rem; text-align: center;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(255,255,255,0.02);
             animation: panelEnter 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 550px; z-index: 10;
+            display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 4rem;
+            width: 90%; max-width: 1100px; z-index: 10;
+        }
+        .start-hero-col {
+            flex: 1.2; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        @media (max-width: 900px) {
+            .start-glass-panel {
+                flex-direction: column; gap: 2rem; max-width: 550px; padding: 3rem 2rem;
+            }
         }
         @keyframes panelEnter {
             0% { opacity: 0; transform: translateY(30px) scale(0.95); }
@@ -254,10 +263,10 @@
         
         .start-subtitle {
             color: #94a3b8; font-size: 1.4rem; font-weight: 400; letter-spacing: 2px;
-            margin-bottom: 3rem; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;
+            margin-bottom: 1rem; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;
         }
         
-        .start-buttons-wrapper { display: flex; flex-direction: column; gap: 1.2rem; width: 100%; }
+        .start-buttons-wrapper { display: flex; flex-direction: column; justify-content: center; gap: 1.5rem; width: 100%; flex: 1; }
         
         .btn-premium {
             width: 100%; padding: 1.2rem; font-size: 1.6rem; font-weight: 700;
@@ -412,49 +421,71 @@
     <div id="startMenuOverlay">
         <div class="ambient-glow"></div>
         <div class="start-glass-panel">
-            <svg class="start-icon" viewBox="0 0 120 120" style="width: 220px; height: 220px; margin-bottom: 2rem; filter: drop-shadow(0 0 35px rgba(212, 175, 55, 0.4)); animation: floatSlow 3s ease-in-out infinite alternate;">
-              <style>
-                .spin-ring { transform-origin: 60px 60px; animation: spinRing 25s linear infinite; }
-                @keyframes spinRing { 100% { transform: rotate(360deg); } }
-                @keyframes floatSlow { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
-              </style>
-              <defs>
-                <linearGradient id="arabicGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#F9F29F" />
-                  <stop offset="50%" stop-color="#D4AF37" />
-                  <stop offset="100%" stop-color="#AA7C11" />
-                </linearGradient>
-                <radialGradient id="royalCore" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#1e3a8a" />
-                  <stop offset="100%" stop-color="#0f172a" />
-                </radialGradient>
-                <filter id="glowGold">
-                  <feGaussianBlur stdDeviation="1.5" result="blur"/>
-                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-              </defs>
+            <div class="start-hero-col">
+                <svg class="start-icon" viewBox="0 0 120 120" style="width: 250px; height: 250px; margin-bottom: 2rem; filter: drop-shadow(0 0 35px rgba(212, 175, 55, 0.4)); animation: floatSlow 3s ease-in-out infinite alternate;">
+                  <style>
+                    .spin-ring { transform-origin: 60px 60px; animation: spinRing 30s linear infinite; }
+                    .spin-reverse { transform-origin: 60px 60px; animation: spinRingRev 40s linear infinite; }
+                    .pulse-hex { transform-origin: 60px 60px; animation: pulseHex 2s ease-in-out infinite alternate; }
+                    @keyframes spinRing { 100% { transform: rotate(360deg); } }
+                    @keyframes spinRingRev { 100% { transform: rotate(-360deg); } }
+                    @keyframes floatSlow { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
+                    @keyframes pulseHex { 0% { transform: scale(0.96); filter: brightness(0.9);} 100% { transform: scale(1.04); filter: brightness(1.2);} }
+                  </style>
+                  <defs>
+                    <linearGradient id="arabicGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#F9F29F" />
+                      <stop offset="50%" stop-color="#D4AF37" />
+                      <stop offset="100%" stop-color="#AA7C11" />
+                    </linearGradient>
+                    <linearGradient id="hexInner" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#334155" />
+                      <stop offset="100%" stop-color="#0f172a" />
+                    </linearGradient>
+                    <radialGradient id="hexGlow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.8" />
+                      <stop offset="100%" stop-color="#b45309" stop-opacity="0" />
+                    </radialGradient>
+                    <filter id="glowGold">
+                      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                    <filter id="heavyGlow">
+                      <feGaussianBlur stdDeviation="4" result="blur"/>
+                      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                  </defs>
 
-              <!-- Outer Decorative Rings -->
-              <circle class="spin-ring" cx="60" cy="60" r="54" fill="none" stroke="url(#arabicGold)" stroke-width="2" stroke-dasharray="3, 5" opacity="0.8"/>
-              <circle cx="60" cy="60" r="48" fill="none" stroke="url(#arabicGold)" stroke-width="0.5" opacity="0.4"/>
+                  <!-- Background floating hexes (small) -->
+                  <g class="spin-reverse" opacity="0.6">
+                     <polygon points="60,6 66.9,10 66.9,18 60,22 53.1,18 53.1,10" fill="none" stroke="url(#arabicGold)" stroke-width="1" />
+                     <polygon points="106.7,86 113.6,90 113.6,98 106.7,102 99.8,98 99.8,90" fill="url(#arabicGold)" opacity="0.3" />
+                     <polygon points="13.3,86 20.2,90 20.2,98 13.3,102 6.4,98 6.4,90" fill="none" stroke="url(#arabicGold)" stroke-width="1" />
+                  </g>
 
-              <!-- 8-Pointed Islamic Star (Rub el Hizb) -->
-              <g filter="url(#glowGold)">
-                  <!-- First Square -->
-                  <rect x="30" y="30" width="60" height="60" fill="url(#royalCore)" stroke="url(#arabicGold)" stroke-width="2.5" rx="2" />
-                  <!-- Second Square rotated 45deg -->
-                  <rect x="30" y="30" width="60" height="60" fill="url(#royalCore)" stroke="url(#arabicGold)" stroke-width="2.5" rx="2" transform="rotate(45 60 60)" />
-              </g>
+                  <!-- Outer Decorative Rings -->
+                  <circle class="spin-ring" cx="60" cy="60" r="54" fill="none" stroke="url(#arabicGold)" stroke-width="1.5" stroke-dasharray="4, 8" opacity="0.7"/>
+                  <circle class="spin-reverse" cx="60" cy="60" r="48" fill="none" stroke="url(#arabicGold)" stroke-width="0.5" stroke-dasharray="10, 5" opacity="0.4"/>
 
-              <!-- Inner Decor for the letter -->
-              <circle cx="60" cy="60" r="24" fill="none" stroke="url(#arabicGold)" stroke-width="1.5" opacity="0.9" />
-              <circle cx="60" cy="60" r="18" fill="url(#arabicGold)" opacity="0.2"/>
+                  <!-- Central Honeycomb Structure -->
+                  <g filter="url(#glowGold)">
+                      <!-- Back layer Hexagon -->
+                      <polygon points="60,15 99,37.5 99,82.5 60,105 21,82.5 21,37.5" fill="none" stroke="rgba(251, 191, 36, 0.2)" stroke-width="3" transform="scale(0.9) translate(6, 6)"/>
+                      <!-- Front Main Hexagon -->
+                      <polygon class="pulse-hex" points="60,15 99,37.5 99,82.5 60,105 21,82.5 21,37.5" fill="url(#hexInner)" stroke="url(#arabicGold)" stroke-width="3"/>
+                      
+                      <!-- Inner styling -->
+                      <polygon points="60,22 93,41 93,79 60,98 27,79 27,41" fill="url(#hexGlow)" opacity="0.4"/>
+                      <polygon points="60,25 90,42.5 90,77.5 60,95 30,77.5 30,42.5" fill="none" stroke="url(#arabicGold)" stroke-width="1" stroke-dasharray="2, 4" opacity="0.5"/>
+                  </g>
 
-              <!-- Central Letter 'ط' -->
-              <text x="60" y="73" font-family="'Tajawal', sans-serif" font-weight="900" font-size="42" fill="url(#arabicGold)" text-anchor="middle" filter="url(#glowGold)">ط</text>
-            </svg>
-            <h1 class="start-title">حروف مع طلال</h1>
-            <p class="start-subtitle">تحدي الذكاء، الحروف، والثقافة</p>
+                  <!-- Central Letter 'ط' -->
+                  <text class="pulse-hex" x="60" y="77" font-family="'Tajawal', sans-serif" font-weight="900" font-size="44" fill="url(#arabicGold)" text-anchor="middle" filter="url(#heavyGlow)">ط</text>
+                  <text class="pulse-hex" x="60" y="77" font-family="'Tajawal', sans-serif" font-weight="900" font-size="44" fill="#ffffff" text-anchor="middle">ط</text>
+                </svg>
+                <h1 class="start-title">حروف مع طلال</h1>
+                <p class="start-subtitle">تحدي الذكاء، الحروف، والثقافة</p>
+            </div>
             
             <div class="start-buttons-wrapper">
                 <button class="btn-premium btn-play" onclick="showRoleSelection()">بدء المواجهة ▶️</button>
@@ -547,6 +578,9 @@
     </div>
 
     <button id="mainSettingsBtn" class="settings-btn" onclick="openSettings()" title="الإعدادات" style="display: none;">⚙️ الإعدادات</button>
+    <div id="roomCodeDisplay" style="display: none; position: absolute; top: 1.5rem; right: 2rem; background: rgba(16, 185, 129, 0.15); border: 2px dashed #10b981; color: #10b981; padding: 0.8rem 1.5rem; border-radius: 12px; font-size: 1.6rem; font-weight: bold; z-index: 50; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+        رقم الغرفة: <span id="currentRoomDisplayVal" style="color: #fff; letter-spacing: 2px;">----</span>
+    </div>
     <button id="homeBtn" class="settings-btn" onclick="returnToHome()" title="العودة للرئيسية" style="top: 4.5rem; display: none;">🏠 الرئيسية</button>
     <button id="fullscreenBtn" class="settings-btn" onclick="toggleFullscreen()" title="تكبير الشاشة للسبورة" style="top: 7.5rem; display: none;">⛶ تكبير</button>
     <button id="historyBtn" class="settings-btn" onclick="openHistory()" title="سجل الأسئلة" style="top: 10.5rem; display: none;">📜 السجل</button>
@@ -1008,6 +1042,7 @@
         let currentQuestionText = "";
 
         let evtSource = null;
+        let currentRoomCode = null;
 
         function toggleMute() {
             isMuted = !isMuted;
@@ -1050,22 +1085,32 @@
         }
 
         function selectRole(role) {
-            document.getElementById('roleOverlay').style.display = 'none';
             if (role === 'board') {
+                let code = prompt("الرجاء إدخال رقم الغرفة للاتصال بالشاشة (مكون من 4 أرقام):");
+                if(!code || code.trim() === "") return;
+                currentRoomCode = code.trim();
+                
+                document.getElementById('roleOverlay').style.display = 'none';
                 isHost = false;
                 document.getElementById('mainSettingsBtn').style.display = 'none';
+                document.getElementById('roomCodeDisplay').style.display = 'none';
                 document.getElementById('homeBtn').style.display = 'inline-block';
                 document.getElementById('fullscreenBtn').style.display = 'inline-block';
                 document.getElementById('historyBtn').style.display = 'none';
                 document.getElementById('sideControls').style.display = 'none';
                 
-                document.getElementById('roundsGoalDisplay').innerText = `بانتظار تلقي الإشارة من المُقدم ⏳...`;
+                document.getElementById('roundsGoalDisplay').innerText = `بانتظار الإشارة من غرفة [${currentRoomCode}] ⏳...`;
                 
                 if (evtSource) evtSource.close();
-                evtSource = new EventSource('/events');
+                evtSource = new EventSource('/events?room=' + encodeURIComponent(currentRoomCode));
                 evtSource.onmessage = (e) => applyState(JSON.parse(e.data));
                 
             } else {
+                currentRoomCode = Math.floor(1000 + Math.random() * 9000).toString();
+                document.getElementById('currentRoomDisplayVal').innerText = currentRoomCode;
+                document.getElementById('roomCodeDisplay').style.display = 'inline-block';
+                
+                document.getElementById('roleOverlay').style.display = 'none';
                 isHost = true;
                 document.getElementById('mainSettingsBtn').style.display = 'inline-block';
                 document.getElementById('homeBtn').style.display = 'inline-block';
@@ -1087,6 +1132,7 @@
                 document.getElementById('supportersOverlay').classList.remove('active');
                 
                 document.getElementById('mainSettingsBtn').style.display = 'none';
+                document.getElementById('roomCodeDisplay').style.display = 'none';
                 document.getElementById('homeBtn').style.display = 'none';
                 document.getElementById('fullscreenBtn').style.display = 'none';
                 document.getElementById('historyBtn').style.display = 'none';
@@ -1214,7 +1260,7 @@
                 soundTrigger: soundType ? { type: soundType, time: Date.now() } : null
             };
             
-            fetch('/update', {
+            fetch('/update?room=' + encodeURIComponent(currentRoomCode || 'default'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(state)
