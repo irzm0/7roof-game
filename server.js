@@ -72,13 +72,18 @@ const server = http.createServer((req, res) => {
             rooms[room] = { gameState: null, clients: [] };
         }
         
+        if (rooms[room].gameState && rooms[room].gameState.isRoomLocked) {
+             res.write(`event: room_locked\ndata: {}\n\n`);
+             res.end();
+             return;
+        }
+        
         if (rooms[room].gameState) res.write(`data: ${JSON.stringify(rooms[room].gameState)}\n\n`);
         
         rooms[room].clients.push(res);
         req.on('close', () => {
             if(rooms[room]) {
                 rooms[room].clients = rooms[room].clients.filter(client => client !== res);
-                // Optional cleanup: if (!rooms[room].clients.length) delete rooms[room];
             }
         });
     } else if (req.method === 'POST' && pathname === '/update') {
