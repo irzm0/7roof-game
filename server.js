@@ -9,8 +9,14 @@ let rooms = {};
 const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*'); 
 
-    // معالجة الرابط واستخراج اسم الغرفة من الـ Query
-    const reqUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    let reqUrl;
+    try {
+        reqUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    } catch (err) {
+        res.writeHead(400);
+        res.end('Bad Request');
+        return;
+    }
     const pathname = reqUrl.pathname;
     const room = reqUrl.searchParams.get('room') || 'default';
 
