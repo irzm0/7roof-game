@@ -880,7 +880,7 @@
             osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 2.0);
         }
 
-        function playHostSound(type) {
+        function playHostSound(type, sync = true) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (!isMuted) {
                 const t = audioCtx.currentTime;
@@ -922,7 +922,10 @@
                     osc.start(t); osc.stop(t + 0.4);
                 }
             }
-            syncToStorage('sound_' + type);
+            // Only sync to server if called by the host directly (not from applyState)
+            if (sync && isHost) {
+                syncToStorage('sound_' + type);
+            }
         }
 
         const questionsDB = {
@@ -1619,8 +1622,9 @@
                     if (t === 'confettiBlue') { launchConfetti(['#3b82f6', '#1e3a8a']); launchFlash('blue'); }
                     if (t === 'confettiRed') { launchConfetti(['#ef4444', '#7f1d1d']); launchFlash('red'); }
                     if (t === 'winTune') playWinTune();
-                    if (t === 'sound_correct') playHostSound('correct');
-                    if (t === 'sound_wrong') playHostSound('wrong');
+                    // Only play sound_correct/wrong on non-host screens (host already played it directly)
+                    if (t === 'sound_correct' && !isHost) playHostSound('correct', false);
+                    if (t === 'sound_wrong' && !isHost) playHostSound('wrong', false);
                     if (t === 'bigConfetti') {
                         if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 } });
                     }
