@@ -1148,6 +1148,7 @@
         let myTeam = null;
         let myPlayerName = null;
         let buzzerWinner = null;
+        let isRoleBuzzer = false;
 
         let evtSource = null;
         let currentRoomCode = null;
@@ -1259,6 +1260,7 @@
                 
                 document.getElementById('roleOverlay').style.display = 'none';
                 isHost = false;
+                isRoleBuzzer = false;
                 document.getElementById('mainSettingsBtn').style.display = 'none';
                 document.getElementById('roomCodeDisplay').style.display = 'none';
                 document.getElementById('homeBtn').style.display = 'inline-block';
@@ -1285,6 +1287,7 @@
                 
                 document.getElementById('roleOverlay').style.display = 'none';
                 isHost = false;
+                isRoleBuzzer = true;
                 document.getElementById('mainSettingsBtn').style.display = 'none';
                 document.getElementById('roomCodeDisplay').style.display = 'none';
                 document.getElementById('homeBtn').style.display = 'none';
@@ -1322,7 +1325,10 @@
                 document.getElementById('homeBtn').style.display = 'inline-block';
                 document.getElementById('fullscreenBtn').style.display = 'inline-block';
                 document.getElementById('historyBtn').style.display = 'inline-block';
-                if (evtSource) { evtSource.close(); evtSource = null; }
+                if (evtSource) { evtSource.close(); }
+                evtSource = new EventSource('/events?room=' + encodeURIComponent(currentRoomCode));
+                evtSource.onmessage = (e) => applyState(JSON.parse(e.data));
+                
                 initRound();
             }
         }
@@ -1349,6 +1355,7 @@
                 
                 myTeam = null;
                 myPlayerName = null;
+                isRoleBuzzer = false;
                 
                 if (document.fullscreenElement) {
                     document.exitFullscreen().catch(err => { console.log(err); });
@@ -1527,7 +1534,7 @@
                 const bwDiv = document.getElementById('buzzerWinnerDisplay');
                 if (bwDiv && currentSelectedCellId) {
                     bwDiv.style.display = 'block';
-                    const tName = buzzerWinner.team === 'blue' ? '🔵 أزرق' : '🔴 أحمر';
+                    const tName = buzzerWinner.team === 'blue' ? '🔵 الأزرق' : '🔴 الأحمر';
                     const tColor = buzzerWinner.team === 'blue' ? '#3b82f6' : '#ef4444';
                     bwDiv.innerHTML = `الأسرع: <strong style="color:${tColor}">${buzzerWinner.playerName} (${tName})</strong> ⚡`;
                 }
@@ -1585,7 +1592,7 @@
             let justPlayedIntro = false;
             if (state.introTrigger && state.introTrigger.time !== lastIntroTime) {
                 lastIntroTime = state.introTrigger.time;
-                if (!isTvMode) {
+                if (!isTvMode && !isRoleBuzzer) {
                     playIntroSequence(state.introTrigger.title, state.introTrigger.subtitle, state.introTrigger.isMatchStart);
                     if (!isHost) justPlayedIntro = true;
                 }
@@ -1594,24 +1601,28 @@
             // Redraw board if layout changed or newly initialized
             const board = document.getElementById('board');
             if (board.children.length === 0 || board.dataset.layout !== JSON.stringify(lettersLayout)) {
-                drawBoardUI(justPlayedIntro);
+                if (!isRoleBuzzer) drawBoardUI(justPlayedIntro);
                 board.dataset.layout = JSON.stringify(lettersLayout);
             }
-            applyBoardStateUI();
+            if (!isRoleBuzzer) applyBoardStateUI();
             updateScoreboard();
 
-            if (state.soundTrigger && state.soundTrigger.time !== lastSoundTime) {
-                lastSoundTime = state.soundTrigger.time;
-                let t = state.soundTrigger.type;
-                if (t === 'tick') playTick();
-                if (t === 'assign') playAssign();
-                if (t === 'confettiBlue') { launchConfetti(['#3b82f6', '#1e3a8a']); launchFlash('blue'); }
-                if (t === 'confettiRed') { launchConfetti(['#ef4444', '#7f1d1d']); launchFlash('red'); }
-                if (t === 'winTune') playWinTune();
-                if (t === 'sound_correct') playHostSound('correct');
-                if (t === 'sound_wrong') playHostSound('wrong');
-                if (t === 'bigConfetti') {
-                    if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 } });
+            if (state.soundTrigger) {
+                if (lastSoundTime === 0) {
+                    lastSoundTime = state.soundTrigger.time;
+                } else if (state.soundTrigger.time !== lastSoundTime) {
+                    lastSoundTime = state.soundTrigger.time;
+                    let t = state.soundTrigger.type;
+                    if (t === 'tick') playTick();
+                    if (t === 'assign') playAssign();
+                    if (t === 'confettiBlue') { launchConfetti(['#3b82f6', '#1e3a8a']); launchFlash('blue'); }
+                    if (t === 'confettiRed') { launchConfetti(['#ef4444', '#7f1d1d']); launchFlash('red'); }
+                    if (t === 'winTune') playWinTune();
+                    if (t === 'sound_correct') playHostSound('correct');
+                    if (t === 'sound_wrong') playHostSound('wrong');
+                    if (t === 'bigConfetti') {
+                        if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 } });
+                    }
                 }
             }
         }
@@ -2267,6 +2278,14 @@
             document.getElementById('stealQuestionBtn').style.display = 'inline-block';
             document.getElementById('changeQuestionBtnBlue').style.display = teamJokers.blue > 0 ? 'inline-block' : 'none';
             document.getElementById('changeQuestionBtnRed').style.display = teamJokers.red > 0 ? 'inline-block' : 'none';
+            
+            const rstBtn = document.getElementById('resetBuzzerBtn');
+            rstBtn.style.display = 'inline-block';
+            rstBtn.style.gridColumn = 'span 3';
+            rstBtn.style.background = 'rgba(245, 158, 11, 0.15)';
+            rstBtn.style.padding = '1.2rem 0';
+            rstBtn.style.marginTop = '10px';
+            
             document.getElementById('changeQuestionBtnBlue').innerText = `🃏 تغيير أزرق (${teamJokers.blue})`;
             document.getElementById('changeQuestionBtnRed').innerText = `🃏 تغيير أحمر (${teamJokers.red})`;
         }
