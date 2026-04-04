@@ -1523,13 +1523,14 @@
             
             // Buzzer Logic update
             if (state.buzzerWinner) {
-                if (!buzzerWinner && isHost) {
+                const wasNewBuzzer = (!buzzerWinner && isHost);
+                buzzerWinner = state.buzzerWinner;
+                if (wasNewBuzzer) {
                     playHostSound('buzzer');
                     if(document.getElementById('stopTimerBtn').style.display !== 'none') {
                         stopTimer(); // Pause timer since someone buzzed 
                     }
                 }
-                buzzerWinner = state.buzzerWinner;
                 
                 const bwDiv = document.getElementById('buzzerWinnerDisplay');
                 if (bwDiv && currentSelectedCellId) {
