@@ -106,6 +106,14 @@
             display: flex; justify-content: center; align-items: center; cursor: pointer;
             transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.2s ease;
         }
+        .hex-wrap.flip-3d {
+            animation: flipHexAnim 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes flipHexAnim {
+            0% { transform: scale(1) rotateY(0deg); }
+            50% { transform: scale(1.3) rotateY(180deg); z-index: 50; border-radius: 50%; }
+            100% { transform: scale(1) rotateY(360deg); }
+        }
         .hex-inner {
             position: relative;
             width: 100%; height: 100%;
@@ -578,8 +586,10 @@
     </div>
 
     <button id="mainSettingsBtn" class="settings-btn" onclick="openSettings()" title="الإعدادات" style="display: none;">⚙️ الإعدادات</button>
-    <div id="roomCodeDisplay" style="display: none; position: absolute; top: 1.5rem; right: 2rem; background: rgba(16, 185, 129, 0.15); border: 2px dashed #10b981; color: #10b981; padding: 0.8rem 1.5rem; border-radius: 12px; font-size: 1.6rem; font-weight: bold; z-index: 50; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-        رقم الغرفة: <span id="currentRoomDisplayVal" style="color: #fff; letter-spacing: 2px;">----</span>
+    <div id="roomCodeDisplay" style="display: none; position: absolute; top: 1.5rem; right: 2rem; background: rgba(16, 185, 129, 0.15); border: 2px dashed #10b981; color: #10b981; padding: 0.8rem 1.5rem; border-radius: 12px; font-size: 1.6rem; font-weight: bold; z-index: 50; box-shadow: 0 4px 15px rgba(0,0,0,0.3); flex-direction: column; align-items: center; gap: 10px;">
+        <div>رقم الغرفة: <span id="currentRoomDisplayVal" style="color: #fff; letter-spacing: 2px;">----</span></div>
+        <img id="roomQrCode" src="" alt="QR Code" style="width: 130px; height: 130px; border-radius: 8px; border: 2px solid white; display: none;">
+        <button id="lockRoomBtn" onclick="toggleRoomLock()" style="margin-top: 5px; padding: 5px 15px; border-radius: 6px; background: rgba(16, 185, 129, 0.2); color: white; border: 1px solid #10b981; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.3s; width: 100%;">فتح الغرفة 🔓</button>
     </div>
     <button id="homeBtn" class="settings-btn" onclick="returnToHome()" title="العودة للرئيسية" style="top: 4.5rem; display: none;">🏠 الرئيسية</button>
     <button id="fullscreenBtn" class="settings-btn" onclick="toggleFullscreen()" title="تكبير الشاشة للسبورة" style="top: 7.5rem; display: none;">⛶ تكبير</button>
@@ -760,14 +770,16 @@
         function playTick() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (isMuted) return;
+            const t = audioCtx.currentTime;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-            osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.05);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(150, t);
+            osc.frequency.exponentialRampToValueAtTime(50, t + 0.1);
+            gain.gain.setValueAtTime(0.5, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            osc.start(t); osc.stop(t + 0.1);
         }
 
         function playAssign() {
@@ -802,24 +814,33 @@
         function playHostSound(type) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (!isMuted) {
+                const t = audioCtx.currentTime;
                 if (type === 'correct') {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                    osc.frequency.setValueAtTime(900, audioCtx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.3);
+                    const freqs = [440, 554.37, 659.25, 880]; 
+                    freqs.forEach((freq, index) => {
+                        setTimeout(() => {
+                            const osc = audioCtx.createOscillator();
+                            const gain = audioCtx.createGain();
+                            osc.connect(gain); gain.connect(audioCtx.destination);
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                            gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+                            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.0);
+                            osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 1.0);
+                        }, index * 80);
+                    });
                 } else if (type === 'wrong') {
-                    const osc = audioCtx.createOscillator();
+                    const osc1 = audioCtx.createOscillator();
+                    const osc2 = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                    osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
-                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.5);
+                    osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
+                    osc1.type = 'sawtooth'; osc1.frequency.setValueAtTime(100, t);
+                    osc2.type = 'square'; osc2.frequency.setValueAtTime(103, t);
+                    gain.gain.setValueAtTime(0.4, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.8);
+                    osc1.start(t); osc2.start(t);
+                    osc1.stop(t + 0.8); osc2.stop(t + 0.8);
                 }
             }
             syncToStorage('sound_' + type);
@@ -1038,8 +1059,12 @@
         let isMuted = false;
         let isBgMusicPlaying = false;
         let isTvMode = false;
+        let isRoomLocked = false;
         let currentLetterCategory = "";
         let currentQuestionText = "";
+        
+        let currentIntroTrigger = null;
+        let lastIntroTime = 0;
 
         let evtSource = null;
         let currentRoomCode = null;
@@ -1084,6 +1109,22 @@
             document.getElementById('supportersOverlay').classList.remove('active');
         }
 
+        function toggleRoomLock() {
+            if (!isHost) return;
+            isRoomLocked = !isRoomLocked;
+            const btn = document.getElementById('lockRoomBtn');
+            if(isRoomLocked) {
+                btn.style.background = 'rgba(239, 68, 68, 0.5)';
+                btn.style.borderColor = '#ef4444';
+                btn.innerHTML = 'الغرفة مقفلة 🔒';
+            } else {
+                btn.style.background = 'rgba(16, 185, 129, 0.2)';
+                btn.style.borderColor = '#10b981';
+                btn.innerHTML = 'فتح الغرفة 🔓';
+            }
+            syncToStorage('lock_toggle');
+        }
+
         function selectRole(role) {
             if (role === 'board') {
                 let code = prompt("الرجاء إدخال رقم الغرفة للاتصال بالشاشة (مكون من 4 أرقام):");
@@ -1104,11 +1145,24 @@
                 if (evtSource) evtSource.close();
                 evtSource = new EventSource('/events?room=' + encodeURIComponent(currentRoomCode));
                 evtSource.onmessage = (e) => applyState(JSON.parse(e.data));
+                evtSource.addEventListener('room_locked', () => {
+                    alert('عذراً، قام المُقدم بقفل هذه الغرفة، ولا يمكن الانضمام إليها حالياً.');
+                    evtSource.close();
+                    window.location.search = ''; 
+                    window.location.reload();
+                });
                 
             } else {
                 currentRoomCode = Math.floor(1000 + Math.random() * 9000).toString();
                 document.getElementById('currentRoomDisplayVal').innerText = currentRoomCode;
-                document.getElementById('roomCodeDisplay').style.display = 'inline-block';
+                document.getElementById('roomCodeDisplay').style.display = 'flex';
+                
+                const hostUrl = new URL(window.location.href);
+                hostUrl.searchParams.set('room', currentRoomCode);
+                hostUrl.searchParams.set('role', 'board');
+                const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(hostUrl.toString());
+                document.getElementById('roomQrCode').src = qrUrl;
+                document.getElementById('roomQrCode').style.display = 'block';
                 
                 document.getElementById('roleOverlay').style.display = 'none';
                 isHost = true;
@@ -1240,10 +1294,13 @@
             }, 100);
         }
 
-        function syncToStorage(soundType = null, newTimerEndAt = undefined) {
+        function syncToStorage(soundType = null, newTimerEndAt = undefined, introTrig = undefined) {
             if (!isHost) return;
             if (newTimerEndAt !== undefined) {
                 timerEndAt = newTimerEndAt;
+            }
+            if (introTrig !== undefined) {
+                currentIntroTrigger = introTrig;
             }
             
             const state = {
@@ -1256,6 +1313,8 @@
                 teamStreaks: teamStreaks,
                 wildcardCells: wildcardCells,
                 currentTimerDuration: currentTimerDuration,
+                isRoomLocked: isRoomLocked,
+                introTrigger: currentIntroTrigger,
                 timestamp: Date.now(),
                 soundTrigger: soundType ? { type: soundType, time: Date.now() } : null
             };
@@ -1322,6 +1381,13 @@
                 document.getElementById('winModalOverlay').classList.remove('active');
             }
 
+            if (state.introTrigger && state.introTrigger.time !== lastIntroTime) {
+                lastIntroTime = state.introTrigger.time;
+                if (!isTvMode) {
+                    playIntroSequence(state.introTrigger.title, state.introTrigger.subtitle, state.introTrigger.isMatchStart);
+                }
+            }
+
             if (state.soundTrigger && state.soundTrigger.time !== lastSoundTime) {
                 lastSoundTime = state.soundTrigger.time;
                 let t = state.soundTrigger.type;
@@ -1336,6 +1402,75 @@
                     if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 } });
                 }
             }
+        }
+
+        function playIntroSequence(title, subtitle, isMatchStart) {
+            const overlay = document.createElement('div');
+            overlay.id = 'gameIntroSequenceOverlay';
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0'; overlay.style.left = '0'; overlay.style.right = '0'; overlay.style.bottom = '0';
+            overlay.style.background = 'radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%)';
+            overlay.style.zIndex = '9999';
+            overlay.style.display = 'flex'; overlay.style.flexDirection = 'column'; overlay.style.justifyContent = 'center'; overlay.style.alignItems = 'center';
+            overlay.style.opacity = '1'; overlay.style.transition = 'opacity 0.6s ease';
+            
+            overlay.innerHTML = `
+                <style>
+                    .intro-anim-text {
+                        font-size: 5.5rem;
+                        color: #fbbf24;
+                        font-weight: 900;
+                        text-align: center;
+                        text-shadow: 0 0 40px rgba(251, 191, 36, 0.7);
+                        position: absolute;
+                        opacity: 0;
+                        transform: scale(0.5);
+                        font-family: 'Tajawal', sans-serif;
+                    }
+                    .intro-anim-subtitle { color: #f8fafc; font-size: 4.5rem; text-shadow: 0 0 30px rgba(255, 255, 255, 0.5); }
+                    @keyframes introZoomInOut {
+                        0% { opacity: 0; transform: scale(0.3); filter: blur(5px); }
+                        15% { opacity: 1; transform: scale(1.1); filter: blur(0); }
+                        75% { opacity: 1; transform: scale(1.0); filter: blur(0); }
+                        100% { opacity: 0; transform: scale(1.5); filter: blur(5px); }
+                    }
+                    .animate-intro { animation: introZoomInOut 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                </style>
+                <div class="intro-anim-text" id="introTitleEl">${title}</div>
+                <div class="intro-anim-text intro-anim-subtitle" id="introSubtitleEl">${subtitle}</div>
+            `;
+            document.body.appendChild(overlay);
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (!isMuted) {
+                const t = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.type = 'triangle';
+                if (isMatchStart) {
+                    osc.frequency.setValueAtTime(440, t);
+                    osc.frequency.setValueAtTime(554.37, t + 0.1);
+                    osc.frequency.setValueAtTime(659.25, t + 0.2);
+                    osc.frequency.setValueAtTime(880, t + 0.3);
+                } else {
+                    osc.frequency.setValueAtTime(554.37, t);
+                    osc.frequency.setValueAtTime(880, t + 0.15);
+                }
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(0.3, t + 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 2.5);
+                osc.start(t); osc.stop(t + 2.5);
+            }
+
+            const titleEl = overlay.querySelector('#introTitleEl');
+            const subtitleEl = overlay.querySelector('#introSubtitleEl');
+
+            setTimeout(() => { titleEl.classList.add('animate-intro'); }, 100);
+            setTimeout(() => { subtitleEl.classList.add('animate-intro'); }, 2600);
+            
+            setTimeout(() => { overlay.style.opacity = '0'; }, 5100);
+            setTimeout(() => { if (document.body.contains(overlay)) document.body.removeChild(overlay); }, 5700);
         }
 
         // إعدادات اللعبة
@@ -1580,11 +1715,17 @@
             syncToStorage('tick');
         }
 
+        let oldBoardState = {};
         function applyBoardStateUI() {
             Object.keys(lettersLayout).forEach(cellId => {
                 const cell = document.getElementById(cellId);
                 if (!cell) return;
                 cell.className = 'hex-wrap'; // Reset
+                
+                if (oldBoardState[cellId] !== boardState[cellId] && boardState[cellId] !== null) {
+                    cell.classList.add('flip-3d');
+                    setTimeout(() => cell.classList.remove('flip-3d'), 605);
+                }
                 
                 if (isGameOver && winState && winState.winningCellIds && winState.winningCellIds.length > 0) {
                     if (winState.winningCellIds.includes(cellId)) {
@@ -1603,6 +1744,7 @@
                     else if (goldenCells.includes(cellId) && !boardState[cellId]) cell.classList.add('golden-cell');
                 }
             });
+            oldBoardState = {...boardState};
         }
 
         function initRound() {
@@ -1645,7 +1787,23 @@
 
             drawBoardUI();
             applyBoardStateUI();
-            syncToStorage();
+            
+            const rmNum = roundsWon.blue + roundsWon.red + 1;
+            const rmMap = {1:"الأولى", 2:"الثانية", 3:"الثالثة", 4:"الرابعة", 5:"الخامسة", 6:"السادسة", 7:"السابعة", 8:"الثامنة", 9:"التاسعة", 10:"العاشرة"};
+            const subtitleTxt = "الجولة " + (rmMap[rmNum] || rmNum);
+            
+            const introTrig = {
+                title: gameTitle,
+                subtitle: subtitleTxt,
+                isMatchStart: (rmNum === 1),
+                time: Date.now()
+            };
+            
+            if (!isTvMode) {
+                playIntroSequence(introTrig.title, introTrig.subtitle, introTrig.isMatchStart);
+            }
+            
+            syncToStorage(null, undefined, introTrig);
         }
 
         function hardResetGame() {
@@ -2075,7 +2233,19 @@
 
         // الإعداد الافتراضي واللوحة الشرفية
         window.onload = () => {
-            // ننتظر من المستخدم اختيار الدور عبر الشاشة
+            // التحقق من وجود باركود للربط التلقائي
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomQuery = urlParams.get('room');
+            const roleQuery = urlParams.get('role');
+            if (roomQuery && roleQuery === 'board') {
+                 setTimeout(() => {
+                     // تجاوز إدخال رقم الغرفة يدوياً للمتسابق باستخدام الـ QR
+                     let originalPrompt = window.prompt;
+                     window.prompt = () => roomQuery; 
+                     selectRole('board');
+                     window.prompt = originalPrompt;
+                 }, 300);
+            }
         };
 
         // Leaderboard logic
