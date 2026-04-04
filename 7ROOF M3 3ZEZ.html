@@ -745,27 +745,27 @@
             
             <div id="hostGridControls" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; width: 100%;">
                 
-                <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                    <button class="btn btn-answer" id="startTimerBtn" onclick="startTimer()" style="background: transparent; border-color: #fbbf24; color: #fbbf24; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">▶️ العداد</button>
-                    <button class="btn btn-answer" id="stopTimerBtn" onclick="stopTimer()" style="background: transparent; border-color: #ef4444; color: #ef4444; display: none; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">⏹️ إيقاف</button>
+                <!-- صف 1: التحكم الأساسي -->
+                <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; grid-column: 1;">
+                    <button class="btn btn-answer" id="startTimerBtn" onclick="startTimer()" style="background: rgba(251,191,36,0.1); border-color: #fbbf24; color: #fbbf24; width:100%; padding: 0.9rem 0; font-size: 1.05rem; border-radius: 10px; font-weight: bold;">▶️ العداد</button>
+                    <button class="btn btn-answer" id="stopTimerBtn" onclick="stopTimer()" style="background: rgba(239,68,68,0.1); border-color: #ef4444; color: #ef4444; display: none; width:100%; padding: 0.9rem 0; font-size: 1.05rem; border-radius: 10px; font-weight: bold;">⏹️ إيقاف</button>
                 </div>
                 
-                <button class="btn btn-answer" id="showAnswerBtn" onclick="showAnswer()" style="width:100%; margin: 0; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">👁️ الإجابة</button>
+                <button class="btn btn-answer" id="showAnswerBtn" onclick="showAnswer()" style="background: rgba(99,102,241,0.1); border-color: #6366f1; color: #a5b4fc; grid-column: 2; width:100%; margin: 0; padding: 0.9rem 0; font-size: 1.05rem; border-radius: 10px; font-weight: bold;">👁️ الإجابة</button>
                 
-                <button class="btn btn-answer" onclick="playHostSound('correct')" style="border-color: #10b981; color: #10b981; border-style: solid; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">✅ صح</button>
+                <button class="btn btn-answer" id="changeQuestionBtnHost" onclick="changeQuestionHost()" style="background: rgba(168,85,247,0.1); border-color: #a855f7; color: #c084fc; display:none; grid-column: 3; margin: 0; width:100%; padding: 0.9rem 0; font-size: 1.05rem; border-radius: 10px; font-weight: bold;">🔄 تغيير</button>
+
+                <!-- صف 2: بطاقات الجوكر والسطو (تظهر بعد فتح السؤال) -->
+                <button class="btn btn-answer" id="stealQuestionBtn" onclick="triggerStealQuestion()" style="background: rgba(252,165,165,0.1); border-color: #fca5a5; color: #fca5a5; display:none; margin: 0; width:100%; padding: 0.9rem 0; font-size: 1.05rem; border-radius: 10px; font-weight: bold;">💣 سطو</button>
                 
-                <button class="btn btn-answer" id="changeQuestionBtnHost" onclick="changeQuestionHost()" style="border-color: #a855f7; color: #a855f7; display:none; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">🔄 تغيير</button>
+                <button class="btn btn-answer" id="changeQuestionBtnBlue" onclick="changeQuestion('blue')" style="background: rgba(59,130,246,0.1); border-color: #3b82f6; color: #93c5fd; display:none; margin: 0; width:100%; padding: 0.9rem 0; font-size: 1.05rem; border-radius: 10px; font-weight: bold;">🃏 أزرق</button>
                 
-                <button class="btn btn-answer" id="stealQuestionBtn" onclick="triggerStealQuestion()" style="border-color: #fca5a5; color: #fca5a5; display:none; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">💣 سطو</button>
-                
-                <button class="btn btn-answer" onclick="playHostSound('wrong')" style="border-color: #ef4444; color: #ef4444; border-style: solid; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">❌ خطأ</button>
-                
-                <button class="btn btn-answer" id="changeQuestionBtnBlue" onclick="changeQuestion('blue')" style="border-color: #3b82f6; color: #3b82f6; display:none; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">🃏 أزرق</button>
-                
-                <button class="btn btn-answer" id="changeQuestionBtnRed" onclick="changeQuestion('red')" style="border-color: #ef4444; color: #ef4444; display:none; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">🃏 أحمر</button>
-                
-                <button class="btn btn-answer" id="resetBuzzerBtn" onclick="resetBuzzer()" style="border-color: #f59e0b; color: #f59e0b; display:none; margin: 0; width:100%; padding: 0.8rem 0; font-size: 1.1rem; border-radius: 8px;">🔄 تصفير الزر</button>
+                <button class="btn btn-answer" id="changeQuestionBtnRed" onclick="changeQuestion('red')" style="background: rgba(239,68,68,0.1); border-color: #ef4444; color: #fca5a5; display:none; margin: 0; width:100%; padding: 0.9rem 0; font-size: 1.05rem; border-radius: 10px; font-weight: bold;">🃏 أحمر</button>
+
+                <!-- صف 3: تصفير الزر (ممتد) -->
+                <button class="btn btn-answer" id="resetBuzzerBtn" onclick="resetBuzzer()" style="background: rgba(245,158,11,0.15); border-color: #f59e0b; color: #fbbf24; display:none; margin: 0; width:100%; padding: 1rem 0; font-size: 1.1rem; border-radius: 10px; font-weight: bold; grid-column: 1 / -1; letter-spacing: 1px;">🔔 تصفير زر الإجابة</button>
             </div>
+
             
             <div id="buzzerWinnerDisplay" style="display:none; text-align: center; font-size: 1.8rem; margin: 15px 0; padding: 15px; border-radius: 10px; background: rgba(0,0,0,0.5); border: 2px solid #f59e0b; animation: pulse 1s infinite alternate;">
             </div>
