@@ -109,6 +109,29 @@ const server = http.createServer((req, res) => {
                 res.end('Bad JSON');
             }
         });
+    } else if (req.method === 'POST' && pathname === '/buzz') {
+        let body = '';
+        req.on('data', chunk => body += chunk.toString());
+        req.on('end', () => {
+            try {
+                const data = JSON.parse(body); // expected: { team, playerName }
+                if (!rooms[room]) rooms[room] = { gameState: {}, clients: [] };
+                
+                // Only allow buzzing if the game is active (activeCellId exists) and no one buzzed yet
+                if (rooms[room].gameState && rooms[room].gameState.activeCellId && !rooms[room].gameState.buzzerWinner) {
+                     rooms[room].gameState.buzzerWinner = data;
+                     // Broadcast to all
+                     rooms[room].clients.forEach(client => client.write(`data: ${JSON.stringify(rooms[room].gameState)}\n\n`));
+                     res.writeHead(200);
+                     res.end(JSON.stringify({ success: true, winner: data }));
+                } else {
+                     res.writeHead(200);
+                     res.end(JSON.stringify({ success: false, winner: rooms[room].gameState ? rooms[room].gameState.buzzerWinner : null }));
+                }
+            } catch(e) {
+                res.writeHead(400); res.end('Bad Data');
+            }
+        });
     } else {
         res.writeHead(404);
         res.end('Not Found');
