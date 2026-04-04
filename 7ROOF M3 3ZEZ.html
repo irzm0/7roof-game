@@ -212,6 +212,21 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        
+        @keyframes boardPopIn {
+            0% { opacity: 0; transform: scale(0); filter: blur(10px); }
+            70% { opacity: 1; transform: scale(1.1); filter: blur(0); }
+            100% { opacity: 1; transform: scale(1); filter: blur(0); }
+        }
+        @keyframes letterBreathe {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-2px) scale(1.05); text-shadow: 0 0 25px rgba(255,255,255,0.6); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        .hex-inner span {
+            display: inline-block;
+            animation: letterBreathe 3s ease-in-out infinite alternate;
+        }
 
         /* مودال الاحتفال بالانتصار */
         #winModalOverlay { z-index: 200; }
@@ -1364,29 +1379,29 @@
                 else document.body.classList.remove('tv-mode');
             }
             
-            updateTurnUI();
-
-            // Redraw board if layout changed or newly initialized
-            const board = document.getElementById('board');
-            if (board.children.length === 0 || board.dataset.layout !== JSON.stringify(lettersLayout)) {
-                drawBoardUI();
-                board.dataset.layout = JSON.stringify(lettersLayout);
-            }
-            applyBoardStateUI();
-            updateScoreboard();
-
             if (winState) {
                 showWinModal(winState.team, winState.isMatchWin);
             } else {
                 document.getElementById('winModalOverlay').classList.remove('active');
             }
 
+            let justPlayedIntro = false;
             if (state.introTrigger && state.introTrigger.time !== lastIntroTime) {
                 lastIntroTime = state.introTrigger.time;
                 if (!isTvMode) {
                     playIntroSequence(state.introTrigger.title, state.introTrigger.subtitle, state.introTrigger.isMatchStart);
+                    if (!isHost) justPlayedIntro = true;
                 }
             }
+            
+            // Redraw board if layout changed or newly initialized
+            const board = document.getElementById('board');
+            if (board.children.length === 0 || board.dataset.layout !== JSON.stringify(lettersLayout)) {
+                drawBoardUI(justPlayedIntro);
+                board.dataset.layout = JSON.stringify(lettersLayout);
+            }
+            applyBoardStateUI();
+            updateScoreboard();
 
             if (state.soundTrigger && state.soundTrigger.time !== lastSoundTime) {
                 lastSoundTime = state.soundTrigger.time;
@@ -1669,10 +1684,13 @@
             return arr;
         }
 
-        function drawBoardUI() {
+        function drawBoardUI(withIntroDelay = false) {
             const board = document.getElementById('board');
             board.innerHTML = '';
             let letterIndex = 0;
+            
+            // حساب التأخير. إذا كان هناك مقدمة تعمل، نؤخر دخول الخلايا 5 ثوانٍ حتى تنتهي المقدمة.
+            let baseDelay = withIntroDelay ? 5.1 : 0.05;
 
             rowLayout.forEach((count, rowIndex) => {
                 const rowDiv = document.createElement('div');
@@ -1686,9 +1704,18 @@
                     hexWrap.className = 'hex-wrap';
                     hexWrap.id = cellId;
                     
+                    // إضافة حركة الدخول المتتالية للوحة
+                    if (!isTvMode) {
+                        hexWrap.style.opacity = '0';
+                        const delay = baseDelay + (letterIndex * 0.04); // كل حرف يتأخر 4 أجزاء من الثانية
+                        hexWrap.style.animation = `boardPopIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards`;
+                        hexWrap.style.animationDelay = `${delay}s`;
+                    }
+                    
                     const hexInner = document.createElement('div');
                     hexInner.className = 'hex-inner';
-                    hexInner.innerText = letter;
+                    // إضافة حرف متصل بأنيميشن التنفس
+                    hexInner.innerHTML = `<span style="animation-delay: ${Math.random()}s">${letter}</span>`;
 
                     hexWrap.appendChild(hexInner);
                     hexWrap.onclick = () => { if(isHost) openModal(cellId, letter); };
@@ -1785,7 +1812,7 @@
             
             currentTurn = 'blue';
 
-            drawBoardUI();
+            drawBoardUI(!isTvMode); // Host sees intro directly, so trigger board delay
             applyBoardStateUI();
             
             const rmNum = roundsWon.blue + roundsWon.red + 1;
